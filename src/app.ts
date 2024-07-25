@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { globalErrorHandler } from "./middlewares/globalErrorHandler";
 import projectRouter from "./routes/project";
+import subSectionRouter from "./routes/sub-section";
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/project", projectRouter);
+app.use("/sub-section", subSectionRouter);
 
 app.use(globalErrorHandler);
 

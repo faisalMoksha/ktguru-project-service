@@ -1,53 +1,53 @@
-import { NextFunction, Request, Response } from "express";
-import { Request as AuthRequest } from "express-jwt";
+import { NextFunction, Response, Request } from "express";
 import { Logger } from "winston";
+import { Request as AuthRequest } from "express-jwt";
+import { SubSectionService } from "../../services/subSectionService";
 import createHttpError from "http-errors";
-import { ProjectService } from "../../services/projectService";
 
-export class ProjectController {
+export class SubSectionController {
     constructor(
         private logger: Logger,
-        private projectService: ProjectService,
+        private subSectionService: SubSectionService,
     ) {}
 
     create = async (req: Request, res: Response, next: NextFunction) => {
-        const { projectName, projectDesc, technology, companyId } = req.body;
+        const { projectName, projectDesc, technology, projectId } = req.body;
 
-        this.logger.debug("Request to craete project", {
+        this.logger.debug("Request to craete sub section", {
             projectName,
             projectDesc,
             technology,
-            companyId,
+            projectId,
         });
 
         try {
-            const project = await this.projectService.create({
+            const project = await this.subSectionService.create({
                 projectName,
                 projectDesc,
                 technology,
-                companyId,
+                projectId,
             });
 
             res.status(201).json({
                 data: project,
-                message: "Successfuly project created",
+                message: "Successfuly sub section created",
             });
         } catch (error) {
-            next(error);
-            return;
+            return next(error);
         }
     };
 
     update = async (req: Request, res: Response, next: NextFunction) => {
         const _id = req.params.id;
-        const { projectName, projectDesc, technology } = req.body;
+        const { projectName, projectDesc, technology, projectId } = req.body;
 
         try {
-            const data = await this.projectService.update({
+            const data = await this.subSectionService.update({
                 _id,
                 projectName,
                 projectDesc,
                 technology,
+                projectId,
             });
 
             res.status(200).json({
@@ -66,27 +66,28 @@ export class ProjectController {
             }
 
             const userId = req.auth.sub;
+            const projectId = req.params.id;
 
-            const data = await this.projectService.getAll(userId);
+            const data = await this.subSectionService.getAll(userId, projectId);
             res.status(200).json({ data });
         } catch (error) {
             return next(error);
         }
     };
 
-    getOne = async (req: AuthRequest, res: Response, next: NextFunction) => {
-        const projectId = req.params.id;
+    getOne = async (req: Request, res: Response, next: NextFunction) => {
+        const id = req.params.id;
 
-        if (!projectId) {
+        if (!id) {
             next(createHttpError(400, "Invalid url param."));
             return;
         }
 
         try {
-            const data = await this.projectService.findById(projectId);
+            const data = await this.subSectionService.findById(id);
 
             if (!data) {
-                next(createHttpError(400, "Project does not exist."));
+                next(createHttpError(400, "Sub Section does not exist."));
                 return;
             }
 

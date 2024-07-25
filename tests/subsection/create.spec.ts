@@ -3,10 +3,12 @@ import app from "../../src/app";
 import mongoose from "mongoose";
 import { Config } from "../../src/config";
 import createJWKSMock from "mock-jwks";
+import subSectionModel from "../../src/models/project/subSectionModel";
 import projectModel from "../../src/models/project/projectModel";
-import { Project } from "../../src/types";
+import { ResourcesStatus, Roles } from "../../src/constants";
+import { SubSection } from "../../src/types";
 
-describe("POST /project/create", () => {
+describe("POST /subsection/create", () => {
     let jwks: ReturnType<typeof createJWKSMock>;
 
     beforeEach(async () => {
@@ -24,11 +26,32 @@ describe("POST /project/create", () => {
     describe("Given all fields", () => {
         it("should return the 201 status code and reurn valid json response", async () => {
             // Arrange
-            const data = {
+
+            const projectData = {
                 projectName: "M-Attendes",
                 projectDesc: "This is project description",
                 technology: "Dart",
                 companyId: "651d94b37c81f740f30892de",
+                createdBy: "6512a4c42a6759c77211660e",
+                resources: [
+                    {
+                        userId: "6512a4c42a6759c77211660e",
+                        userRole: Roles.ADMIN,
+                        isApproved: true,
+                        status: ResourcesStatus.ACTIVE,
+                    },
+                ],
+            };
+
+            const savedData = await projectModel.create({
+                ...projectData,
+            });
+
+            const data = {
+                projectName: "M-Attendes",
+                projectDesc: "This is project description",
+                technology: "Dart",
+                projectId: savedData._id,
             };
 
             const accessToken = jwks.token({
@@ -38,7 +61,7 @@ describe("POST /project/create", () => {
 
             // Act
             const response = await request(app)
-                .post("/project")
+                .post("/sub-section")
                 .set("Cookie", [`accessToken=${accessToken}`])
                 .send(data);
 
@@ -49,12 +72,31 @@ describe("POST /project/create", () => {
             ).toEqual(expect.stringContaining("json"));
         });
         it("should persist the project data in the database", async () => {
-            // Arrange
-            const data = {
+            const projectData = {
                 projectName: "M-Attendes",
                 projectDesc: "This is project description",
                 technology: "Dart",
                 companyId: "651d94b37c81f740f30892de",
+                createdBy: "6512a4c42a6759c77211660e",
+                resources: [
+                    {
+                        userId: "6512a4c42a6759c77211660e",
+                        userRole: Roles.ADMIN,
+                        isApproved: true,
+                        status: ResourcesStatus.ACTIVE,
+                    },
+                ],
+            };
+
+            const savedData = await projectModel.create({
+                ...projectData,
+            });
+
+            const data = {
+                projectName: "M-Attendes",
+                projectDesc: "This is project description",
+                technology: "Dart",
+                projectId: savedData._id,
             };
 
             const accessToken = jwks.token({
@@ -64,12 +106,12 @@ describe("POST /project/create", () => {
 
             // Act
             await request(app)
-                .post("/project")
+                .post("/sub-section")
                 .set("Cookie", [`accessToken=${accessToken}`])
                 .send(data);
 
             // Assert
-            const projects: Project[] = await projectModel.find();
+            const projects: SubSection[] = await subSectionModel.find();
 
             expect(projects).toHaveLength(1);
             expect(projects[0].projectName).toBe(data.projectName);

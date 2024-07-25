@@ -31,10 +31,22 @@ export interface Project {
     resources: Resources[];
 }
 
-export interface ProjectRequest {
+export interface SubSection {
+    _id: string;
+    projectName: string;
+    projectDesc: string;
+    technology: string;
+    isActive: boolean;
+    projectId: mongoose.Types.ObjectId;
+    createdBy: mongoose.Types.ObjectId;
+    resources: Resources[];
+}
+
+export interface RequestBody {
     _id?: string;
     projectName?: string;
     projectDesc?: string;
     technology?: string;
     companyId?: mongoose.Types.ObjectId;
+    projectId?: mongoose.Types.ObjectId;
 }

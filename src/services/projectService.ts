@@ -1,6 +1,6 @@
 import createHttpError from "http-errors";
 import projectModel from "../models/project/projectModel";
-import { ProjectRequest } from "../types";
+import { RequestBody } from "../types";
 
 export class ProjectService {
     async create({
@@ -8,7 +8,7 @@ export class ProjectService {
         projectDesc,
         technology,
         companyId,
-    }: ProjectRequest) {
+    }: RequestBody) {
         //TODO:1. check subscription is active
         //TODO:2. check project length
         //TODO:3. arrange resources data and save
@@ -26,12 +26,7 @@ export class ProjectService {
         });
     }
 
-    async update({
-        _id,
-        projectName,
-        projectDesc,
-        technology,
-    }: ProjectRequest) {
+    async update({ _id, projectName, projectDesc, technology }: RequestBody) {
         try {
             return await projectModel.findByIdAndUpdate(
                 _id,

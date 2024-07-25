@@ -14,7 +14,7 @@ const projectController = new ProjectController(logger, projectService);
 
 // create project
 router.post(
-    "/create",
+    "/",
     authenticate,
     canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN]),
     asyncWrapper(projectController.create),
