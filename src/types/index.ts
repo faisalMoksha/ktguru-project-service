@@ -1,4 +1,5 @@
 import { Request } from "express";
+import mongoose from "mongoose";
 
 export type AuthCookie = {
     accessToken: string;
@@ -10,4 +11,30 @@ export interface AuthRequest extends Request {
         sub: string;
         role: string;
     };
+}
+
+export interface Resources {
+    userId: mongoose.Types.ObjectId;
+    userRole: string;
+    isApproved: boolean;
+    status: string;
+}
+
+export interface Project {
+    _id: string;
+    projectName: string;
+    projectDesc: string;
+    technology: string;
+    isActive: boolean;
+    companyId: mongoose.Types.ObjectId;
+    createdBy: mongoose.Types.ObjectId;
+    resources: Resources[];
+}
+
+export interface ProjectRequest {
+    _id?: string;
+    projectName?: string;
+    projectDesc?: string;
+    technology?: string;
+    companyId?: mongoose.Types.ObjectId;
 }
