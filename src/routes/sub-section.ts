@@ -6,6 +6,8 @@ import { Roles } from "../constants";
 import logger from "../config/logger";
 import { SubSectionController } from "../controllers/project/subSectionController";
 import { SubSectionService } from "../services/subSectionService";
+import projectValidator from "../validators/project-validator";
+import updateProjectValidator from "../validators/update-project-validator";
 
 const router = express.Router();
 
@@ -19,7 +21,8 @@ const subSectionController = new SubSectionController(
 router.post(
     "/",
     authenticate,
-    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN]),
+    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
+    projectValidator,
     asyncWrapper(subSectionController.create),
 );
 
@@ -27,7 +30,8 @@ router.post(
 router.patch(
     "/:id",
     authenticate,
-    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN]),
+    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
+    updateProjectValidator,
     asyncWrapper(subSectionController.update),
 );
 

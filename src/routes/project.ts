@@ -6,6 +6,8 @@ import { canAccess } from "../middlewares/canAccess";
 import { Roles } from "../constants";
 import logger from "../config/logger";
 import { ProjectService } from "../services/projectService";
+import projectValidator from "../validators/project-validator";
+import updateProjectValidator from "../validators/update-project-validator";
 
 const router = express.Router();
 
@@ -17,6 +19,7 @@ router.post(
     "/",
     authenticate,
     canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN]),
+    projectValidator,
     asyncWrapper(projectController.create),
 );
 
@@ -25,6 +28,7 @@ router.patch(
     "/:id",
     authenticate,
     canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN]),
+    updateProjectValidator,
     asyncWrapper(projectController.update),
 );
 
