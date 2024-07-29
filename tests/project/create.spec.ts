@@ -5,6 +5,7 @@ import { Config } from "../../src/config";
 import createJWKSMock from "mock-jwks";
 import projectModel from "../../src/models/project/projectModel";
 import { Project } from "../../src/types";
+import { Roles } from "../../src/constants";
 
 describe("POST /project/create", () => {
     let jwks: ReturnType<typeof createJWKSMock>;
@@ -33,7 +34,7 @@ describe("POST /project/create", () => {
 
             const accessToken = jwks.token({
                 sub: "6512a4c42a6759c77211660e",
-                role: "company",
+                role: Roles.COMPANY,
             });
 
             // Act
@@ -59,7 +60,7 @@ describe("POST /project/create", () => {
 
             const accessToken = jwks.token({
                 sub: "6512a4c42a6759c77211660e",
-                role: "company",
+                role: Roles.COMPANY,
             });
 
             // Act

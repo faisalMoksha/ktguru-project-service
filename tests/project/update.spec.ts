@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { Config } from "../../src/config";
 import createJWKSMock from "mock-jwks";
 import projectModel from "../../src/models/project/projectModel";
+import { Roles } from "../../src/constants";
 
 describe("PATCH /project/update", () => {
     let jwks: ReturnType<typeof createJWKSMock>;
@@ -37,7 +38,7 @@ describe("PATCH /project/update", () => {
 
             const accessToken = jwks.token({
                 sub: "6512a4c42a6759c77211660e",
-                role: "company",
+                role: Roles.COMPANY,
             });
 
             const updateData = {
@@ -74,7 +75,7 @@ describe("PATCH /project/update", () => {
 
             const accessToken = jwks.token({
                 sub: "6512a4c42a6759c77211660e",
-                role: "company",
+                role: Roles.COMPANY,
             });
 
             const updateData = {

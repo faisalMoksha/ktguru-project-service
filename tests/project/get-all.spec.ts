@@ -46,7 +46,7 @@ describe("GET /project/get-all", () => {
 
             const accessToken = jwks.token({
                 sub: "6512a4c42a6759c77211660e",
-                role: "company",
+                role: Roles.COMPANY,
             });
 
             // Act
