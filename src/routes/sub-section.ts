@@ -5,9 +5,9 @@ import { canAccess } from "../middlewares/canAccess";
 import { Roles } from "../constants";
 import logger from "../config/logger";
 import { SubSectionController } from "../controllers/project/subSectionController";
-import { SubSectionService } from "../services/subSectionService";
 import projectValidator from "../validators/project-validator";
 import updateProjectValidator from "../validators/update-project-validator";
+import { SubSectionService } from "../services/subSectionService";
 
 const router = express.Router();
 

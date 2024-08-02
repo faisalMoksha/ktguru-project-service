@@ -61,9 +61,6 @@ describe("PATCH /subsection/update", () => {
                 .set("Cookie", [`accessToken=${accessToken}`])
                 .send(updateData);
 
-            console.log(response.body, "response.body");
-            console.log(response.error, "response.error");
-
             // Assert
             expect(response.statusCode).toBe(200);
             expect(

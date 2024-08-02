@@ -5,9 +5,9 @@ import authenticate from "../middlewares/authenticate";
 import { canAccess } from "../middlewares/canAccess";
 import { Roles } from "../constants";
 import logger from "../config/logger";
-import { ProjectService } from "../services/projectService";
 import projectValidator from "../validators/project-validator";
 import updateProjectValidator from "../validators/update-project-validator";
+import { ProjectService } from "../services/projectService";
 
 const router = express.Router();
 

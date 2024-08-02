@@ -1,8 +1,8 @@
 import { NextFunction, Response, Request } from "express";
 import { Logger } from "winston";
 import { Request as AuthRequest } from "express-jwt";
-import { SubSectionService } from "../../services/subSectionService";
 import createHttpError from "http-errors";
+import { SubSectionService } from "../../services/subSectionService";
 
 export class SubSectionController {
     constructor(

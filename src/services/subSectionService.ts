@@ -1,8 +1,8 @@
-import { RequestBody } from "../types";
+import { AddUserInProject, RequestBody } from "../types";
 import subSectionModel from "../models/project/subSectionModel";
 import createHttpError from "http-errors";
 import projectModel from "../models/project/projectModel";
-import { Roles } from "../constants";
+import { ResourcesStatus, Roles } from "../constants";
 
 export class SubSectionService {
     async create({
@@ -121,5 +121,164 @@ export class SubSectionService {
 
     async findById(id: string) {
         return await subSectionModel.findById(id);
+    }
+
+    async addUserInSubSection({ userId, projectId }: AddUserInProject) {
+        return await subSectionModel.updateMany({ projectId: projectId }, [
+            {
+                $set: {
+                    resources: {
+                        $cond: {
+                            if: { $in: [userId, "$resources.userId"] },
+                            then: {
+                                $map: {
+                                    input: "$resources",
+                                    as: "resource",
+                                    in: {
+                                        $cond: {
+                                            if: {
+                                                $eq: [
+                                                    "$$resource.userId",
+                                                    userId,
+                                                ],
+                                            },
+                                            then: {
+                                                $mergeObjects: [
+                                                    "$$resource",
+                                                    {
+                                                        status: ResourcesStatus.PENDING,
+                                                    },
+                                                ],
+                                            },
+                                            else: "$$resource",
+                                        },
+                                    },
+                                },
+                            },
+                            else: {
+                                $concatArrays: [
+                                    "$resources",
+                                    [
+                                        {
+                                            userRole: Roles.PROJECT_ADMIN,
+                                            userId: userId,
+                                            isApproved: false,
+                                            createdAt: new Date(),
+                                            status: ResourcesStatus.PENDING,
+                                        },
+                                    ],
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+        ]);
+    }
+
+    async bulkAdd(userId: string, subSectionIds: [string]) {
+        return await subSectionModel.bulkWrite(
+            subSectionIds
+                .map((subSectionId) => [
+                    {
+                        updateOne: {
+                            filter: {
+                                _id: subSectionId,
+                                "resources.userId": userId,
+                            },
+                            update: {
+                                $set: {
+                                    "resources.$.status":
+                                        ResourcesStatus.PENDING,
+                                },
+                            },
+                        },
+                    },
+                    {
+                        updateOne: {
+                            filter: {
+                                _id: subSectionId,
+                                "resources.userId": { $ne: userId },
+                            },
+                            update: {
+                                $addToSet: {
+                                    resources: {
+                                        userRole: Roles.CONSULTANT,
+                                        userId: userId,
+                                        isApproved: false,
+                                        createdAt: new Date(),
+                                        status: ResourcesStatus.PENDING,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                ])
+                .flat(),
+        );
+    }
+
+    async notPresent({ userId, projectId }: AddUserInProject) {
+        return await subSectionModel.find({
+            projectId,
+            $or: [
+                { "resources.userId": { $ne: userId } },
+                { "resources.userId": userId, "resources.isApproved": false },
+            ],
+        });
+    }
+
+    async removedUser({ userId, projectId }: AddUserInProject) {
+        return await subSectionModel.updateMany(
+            {
+                projectId: projectId,
+                resources: { $elemMatch: { userId: userId } },
+            },
+            { $set: { "resources.$.isApproved": false } },
+        );
+    }
+
+    async removedUserFromOne({ userId, projectId }: AddUserInProject) {
+        return await subSectionModel.findOneAndUpdate(
+            {
+                _id: projectId,
+                resources: { $elemMatch: { userId: userId } },
+            },
+            { $set: { "resources.$.isApproved": false } },
+        );
+    }
+
+    async addIUserInSingleSubSection({
+        userId,
+        projectId,
+        role,
+    }: AddUserInProject) {
+        //TODO:1. add data in chat
+        //TODO:2. populate project data if needed
+        const data = await subSectionModel.findOneAndUpdate(
+            {
+                _id: projectId,
+                resources: { $elemMatch: { userId: userId } },
+            },
+            { $set: { "resources.$.isApproved": true } },
+        );
+
+        if (!data) {
+            return await subSectionModel.findByIdAndUpdate(
+                { _id: projectId },
+                {
+                    $push: {
+                        resources: {
+                            userRole: role,
+                            userId: userId,
+                            isApproved: true,
+                        },
+                    },
+                },
+                { new: true },
+            );
+        }
+
+        return data;
     }
 }

@@ -51,6 +51,10 @@ const subSectionSchema = new mongoose.Schema<SubSection>(
                     ],
                     default: ResourcesStatus.PENDING,
                 },
+                createdAt: {
+                    type: Date,
+                    default: Date.now,
+                },
             },
         ],
     },

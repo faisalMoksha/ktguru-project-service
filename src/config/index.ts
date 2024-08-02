@@ -13,6 +13,7 @@ const {
     SUPPORT_PORTAL_URL,
     BACKEND_URL,
     JWKS_URI,
+    USER_SERVICE_URI,
 } = process.env;
 
 export const Config = {
@@ -23,4 +24,5 @@ export const Config = {
     SUPPORT_PORTAL_URL,
     BACKEND_URL,
     JWKS_URI,
+    USER_SERVICE_URI,
 };

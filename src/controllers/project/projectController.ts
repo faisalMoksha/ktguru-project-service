@@ -3,6 +3,7 @@ import { Request as AuthRequest } from "express-jwt";
 import { Logger } from "winston";
 import createHttpError from "http-errors";
 import { ProjectService } from "../../services/projectService";
+import { validationResult } from "express-validator";
 
 export class ProjectController {
     constructor(
@@ -12,6 +13,11 @@ export class ProjectController {
 
     create = async (req: Request, res: Response, next: NextFunction) => {
         const { projectName, projectDesc, technology, companyId } = req.body;
+
+        const result = validationResult(req);
+        if (!result.isEmpty()) {
+            return res.status(400).json({ errors: result.array() });
+        }
 
         this.logger.debug("Request to craete project", {
             projectName,

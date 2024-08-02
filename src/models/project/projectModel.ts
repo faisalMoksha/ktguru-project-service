@@ -51,6 +51,10 @@ const projectSchema = new mongoose.Schema<Project>(
                     ],
                     default: ResourcesStatus.PENDING,
                 },
+                createdAt: {
+                    type: Date,
+                    default: Date.now,
+                },
             },
         ],
     },
