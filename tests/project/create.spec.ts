@@ -1,11 +1,15 @@
 import request from "supertest";
-import app from "../../src/app";
 import mongoose from "mongoose";
-import { Config } from "../../src/config";
 import createJWKSMock from "mock-jwks";
-import projectModel from "../../src/models/project/projectModel";
+import axios from "axios";
+import app from "../../src/app";
+import { Config } from "../../src/config";
+import { ResourcesStatus, Roles } from "../../src/constants";
 import { Project } from "../../src/types";
-import { Roles } from "../../src/constants";
+import projectModel from "../../src/models/projectModel";
+
+jest.mock("axios");
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe("POST /project/create", () => {
     let jwks: ReturnType<typeof createJWKSMock>;
@@ -20,10 +24,11 @@ describe("POST /project/create", () => {
     afterEach(async () => {
         await mongoose.connection.close();
         jwks.stop();
+        jest.clearAllMocks();
     });
 
     describe("Given all fields", () => {
-        it("should return the 201 status code and reurn valid json response", async () => {
+        it("should return the 201 status code and return valid json response", async () => {
             // Arrange
             const data = {
                 projectName: "M-Attendes",
@@ -37,6 +42,19 @@ describe("POST /project/create", () => {
                 role: Roles.COMPANY,
             });
 
+            // Mock the axios.get call
+            mockedAxios.get.mockResolvedValueOnce({
+                data: {
+                    resources: [
+                        {
+                            userId: "6512a4c42a6759c77211660e",
+                            status: ResourcesStatus.ACTIVE,
+                            role: Roles.COMPANY,
+                        },
+                    ],
+                },
+            });
+
             // Act
             const response = await request(app)
                 .post("/project")
@@ -45,9 +63,17 @@ describe("POST /project/create", () => {
 
             // Assert
             expect(response.statusCode).toBe(201);
-            expect(
-                (response.headers as Record<string, string>)["content-type"],
-            ).toEqual(expect.stringContaining("json"));
+            expect(response.headers["content-type"]).toEqual(
+                expect.stringContaining("json"),
+            );
+            expect(response.body).toHaveProperty("data");
+            expect(response.body).toHaveProperty(
+                "message",
+                "Successfuly project created",
+            );
+            expect(mockedAxios.get).toHaveBeenCalledWith(
+                `${Config.USER_SERVICE_URI}/users/company-resource/${data.companyId}`,
+            );
         });
         it("should persist the project data in the database", async () => {
             // Arrange
@@ -61,6 +87,19 @@ describe("POST /project/create", () => {
             const accessToken = jwks.token({
                 sub: "6512a4c42a6759c77211660e",
                 role: Roles.COMPANY,
+            });
+
+            // Mock the axios.get call
+            mockedAxios.get.mockResolvedValueOnce({
+                data: {
+                    resources: [
+                        {
+                            userId: "6512a4c42a6759c77211660e",
+                            status: ResourcesStatus.ACTIVE,
+                            role: Roles.COMPANY,
+                        },
+                    ],
+                },
             });
 
             // Act

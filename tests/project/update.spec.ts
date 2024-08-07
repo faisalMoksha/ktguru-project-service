@@ -1,9 +1,9 @@
 import request from "supertest";
-import app from "../../src/app";
 import mongoose from "mongoose";
-import { Config } from "../../src/config";
 import createJWKSMock from "mock-jwks";
-import projectModel from "../../src/models/project/projectModel";
+import app from "../../src/app";
+import projectModel from "../../src/models/projectModel";
+import { Config } from "../../src/config";
 import { Roles } from "../../src/constants";
 
 describe("PATCH /project/update", () => {

@@ -1,8 +1,8 @@
 import createHttpError from "http-errors";
 import { AddUserInProject, RequestBody } from "../types";
-import projectModel from "../models/project/projectModel";
+import projectModel from "../models/projectModel";
 import { ResourcesStatus, Roles } from "../constants";
-import subSectionModel from "../models/project/subSectionModel";
+import subSectionModel from "../models/subSectionModel";
 
 export class ProjectService {
     async create({
@@ -10,25 +10,28 @@ export class ProjectService {
         projectDesc,
         technology,
         companyId,
+        resource,
+        createdBy,
     }: RequestBody) {
         //TODO:1. check subscription is active
-        //TODO:2. check project length
-        //TODO:3. arrange resources data and save
-        //TODO:4. populate some data and send response
-        //TODO:5. create project chat
+        //TODO:2. check project limit
+        //TODO:3. populate some data and send response
+        //TODO:4. create project chat
 
         return await projectModel.create({
             projectName,
             projectDesc,
             technology,
             companyId,
-            createdBy: "6512a4c42a6759c77211660e",
+            createdBy: createdBy,
             isActive: true,
-            // resources: // TODO: uncomment this
+            resources: resource,
         });
     }
 
     async update({ _id, projectName, projectDesc, technology }: RequestBody) {
+        //TODO:1. update project chat group name
+
         try {
             return await projectModel.findByIdAndUpdate(
                 _id,
@@ -45,6 +48,7 @@ export class ProjectService {
 
     async getAll(userId: string) {
         //TODO:1. check old code
+        //TODO:2. populate some data
         return await projectModel.find({
             resources: {
                 $elemMatch: { userId: userId, isApproved: true },
@@ -101,7 +105,7 @@ export class ProjectService {
                         userRole:
                             role == Roles.CONSULTANT
                                 ? Roles.CONSULTANT
-                                : Roles.COMPANY_ADMIN,
+                                : Roles.PROJECT_ADMIN,
                         userId: userId,
                         isApproved: false,
                         createdAt: new Date(),
@@ -117,7 +121,7 @@ export class ProjectService {
         return await projectModel.findOne({ _id: projectId });
     }
 
-    async removedUser({ userId, projectId }: AddUserInProject) {
+    async removedUser({ userId, projectId, status }: AddUserInProject) {
         //TODO: populate user data
         return await projectModel.findOneAndUpdate(
             {
@@ -127,7 +131,7 @@ export class ProjectService {
             {
                 $set: {
                     "resources.$.isApproved": false,
-                    "resources.$.status": "removedByAdmin",
+                    "resources.$.status": status,
                 },
             },
             { new: true },
@@ -211,40 +215,56 @@ export class ProjectService {
         //TODO:3. add user in chat group
     }
 
-    async removedUserFromCompany(userId: string, companyId: string) {
+    async removedUserFromCompany(
+        userId: string,
+        companyId: string,
+        status: string,
+        isRejectedByUser: boolean,
+    ) {
         await projectModel.updateMany(
             {
                 companyId: companyId,
                 resources: { $elemMatch: { userId: userId } },
             },
-            { $set: { "resources.$.isApproved": false } },
-        );
-
-        // Get project IDs
-        const projectIds = await projectModel.distinct("_id", { companyId });
-
-        // Get subproject IDs
-        const subSectionIds = await subSectionModel.distinct("_id", {
-            projectId: { $in: projectIds },
-        });
-
-        const result = await subSectionModel.updateMany(
             {
-                _id: { $in: subSectionIds },
-                "resources.userId": userId,
-            },
-            {
-                $set: { "resources.$[elem].isApproved": false },
-            },
-            {
-                arrayFilters: [{ "elem.userId": userId }],
-                multi: true,
+                $set: {
+                    "resources.$.isApproved": false,
+                    "resources.$.status": status,
+                },
             },
         );
+
+        if (!isRejectedByUser) {
+            // Get project IDs
+            const projectIds = await projectModel.distinct("_id", {
+                companyId,
+            });
+
+            // Get subproject IDs
+            const subSectionIds = await subSectionModel.distinct("_id", {
+                projectId: { $in: projectIds },
+            });
+
+            const result = await subSectionModel.updateMany(
+                {
+                    _id: { $in: subSectionIds },
+                    "resources.userId": userId,
+                },
+                {
+                    $set: { "resources.$[elem].isApproved": false },
+                },
+                {
+                    arrayFilters: [{ "elem.userId": userId }],
+                    multi: true,
+                },
+            );
+
+            return result;
+        }
+
+        return null;
 
         //TODO:1. remove fro chat group
-
-        return result;
     }
 
     async verifyResource({ projectId, userId }: AddUserInProject) {

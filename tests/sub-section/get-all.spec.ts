@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import { Config } from "../../src/config";
 import createJWKSMock from "mock-jwks";
 import { ResourcesStatus, Roles } from "../../src/constants";
-import subSectionModel from "../../src/models/project/subSectionModel";
+import subSectionModel from "../../src/models/subSectionModel";
 
 describe("GET /subsection/get-all", () => {
     let jwks: ReturnType<typeof createJWKSMock>;
@@ -52,7 +52,7 @@ describe("GET /subsection/get-all", () => {
 
             // Act
             const response = await request(app)
-                .get(`/sub-section/all/6512a4c42a6759c77211660e`)
+                .get(`/sub-section/6512a4c42a6759c77211660e`)
                 .set("Cookie", [`accessToken=${accessToken}`]);
 
             // Assert

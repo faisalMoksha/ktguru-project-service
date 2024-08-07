@@ -8,11 +8,17 @@ import logger from "../config/logger";
 import projectValidator from "../validators/project-validator";
 import updateProjectValidator from "../validators/update-project-validator";
 import { ProjectService } from "../services/projectService";
+import { ApiCallService } from "../services/apiCallService";
 
 const router = express.Router();
 
 const projectService = new ProjectService();
-const projectController = new ProjectController(logger, projectService);
+const apiCallService = new ApiCallService();
+const projectController = new ProjectController(
+    logger,
+    projectService,
+    apiCallService,
+);
 
 // create project
 router.post(

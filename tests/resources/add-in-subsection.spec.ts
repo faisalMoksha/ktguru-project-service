@@ -1,17 +1,14 @@
 import request from "supertest";
 import mongoose from "mongoose";
 import createJWKSMock from "mock-jwks";
-import axios from "axios";
 import app from "../../src/app";
 import { Config } from "../../src/config";
 import { ResourcesStatus, Roles } from "../../src/constants";
 import projectModel from "../../src/models/projectModel";
 import { Project } from "../../src/types";
+import subSectionModel from "../../src/models/subSectionModel";
 
-jest.mock("axios");
-const mockedAxios = axios as jest.Mocked<typeof axios>;
-
-describe("POST /resources/add-resources", () => {
+describe("POST /resources/add-in-subsection", () => {
     let jwks: ReturnType<typeof createJWKSMock>;
 
     beforeEach(async () => {
@@ -42,24 +39,38 @@ describe("POST /resources/add-resources", () => {
                         isApproved: true,
                         status: ResourcesStatus.ACTIVE,
                     },
+                    {
+                        userId: "6512a4c42a6759c772115342",
+                        userRole: Roles.CONSULTANT,
+                        isApproved: true,
+                        status: ResourcesStatus.ACTIVE,
+                    },
+                ],
+            });
+
+            const subsetion = await subSectionModel.create({
+                projectName: "M-Attendes",
+                projectDesc: "This is project description",
+                technology: "Dart",
+                projectId: newData._id,
+                isActive: true,
+                createdBy: "6512a4c42a6759c77211662e",
+                resources: [
+                    {
+                        userId: "6512a4c42a6759c77211662e",
+                        userRole: Roles.ADMIN,
+                        isApproved: true,
+                        status: ResourcesStatus.ACTIVE,
+                    },
                 ],
             });
 
             // Arrange
             const data = {
-                email: "example@gmail.com",
-                projectId: newData._id,
+                userId: "6512a4c42a6759c772115342",
+                projectId: subsetion._id,
                 role: Roles.CONSULTANT,
-                // subSectionIds: ["66b1b21fe3db306be0347c53"],
             };
-
-            // Mock the axios.get call
-            mockedAxios.post.mockResolvedValueOnce({
-                data: {
-                    userId: "6512a4c42a6759c77211660e",
-                    url: "http://localhost:5501/url...",
-                },
-            });
 
             const accessToken = jwks.token({
                 sub: "6512a4c42a6759c77211660e",
@@ -68,7 +79,7 @@ describe("POST /resources/add-resources", () => {
 
             // Act
             const response = await request(app)
-                .post("/resources")
+                .post("/resources/add-in-subsection")
                 .set("Cookie", [`accessToken=${accessToken}`])
                 .send(data);
 
@@ -77,17 +88,8 @@ describe("POST /resources/add-resources", () => {
             expect(response.headers["content-type"]).toEqual(
                 expect.stringContaining("json"),
             );
-            expect(mockedAxios.post).toHaveBeenCalledWith(
-                `${Config.USER_SERVICE_URI}/users/add-resource`,
-                {
-                    email: "example@gmail.com",
-                    role: Roles.CONSULTANT,
-                    projectId: String(newData._id),
-                    companyId: undefined,
-                },
-            );
         });
-        it("should store resource data and isApproved is to be false", async () => {
+        it("should store resource data and isApproved is to be true", async () => {
             const newData = await projectModel.create({
                 projectName: "M-Attendes",
                 projectDesc: "This is project description",
@@ -101,24 +103,38 @@ describe("POST /resources/add-resources", () => {
                         isApproved: true,
                         status: ResourcesStatus.ACTIVE,
                     },
+                    {
+                        userId: "6512a4c42a6759c772115342",
+                        userRole: Roles.CONSULTANT,
+                        isApproved: true,
+                        status: ResourcesStatus.ACTIVE,
+                    },
+                ],
+            });
+
+            const subsetion = await subSectionModel.create({
+                projectName: "M-Attendes",
+                projectDesc: "This is project description",
+                technology: "Dart",
+                projectId: newData._id,
+                isActive: true,
+                createdBy: "6512a4c42a6759c77211662e",
+                resources: [
+                    {
+                        userId: "6512a4c42a6759c77211662e",
+                        userRole: Roles.ADMIN,
+                        isApproved: true,
+                        status: ResourcesStatus.ACTIVE,
+                    },
                 ],
             });
 
             // Arrange
             const data = {
-                email: "example@gmail.com",
-                projectId: newData._id,
+                userId: "6512a4c42a6759c772115342",
+                projectId: subsetion._id,
                 role: Roles.CONSULTANT,
-                // subSectionIds: ["66b1b21fe3db306be0347c53"],
             };
-
-            // Mock the axios.get call
-            mockedAxios.post.mockResolvedValueOnce({
-                data: {
-                    userId: "6512a4c42a6759c77211660e",
-                    url: "http://localhost:5501/url...",
-                },
-            });
 
             const accessToken = jwks.token({
                 sub: "6512a4c42a6759c77211660e",
@@ -131,7 +147,7 @@ describe("POST /resources/add-resources", () => {
                 .set("Cookie", [`accessToken=${accessToken}`])
                 .send(data);
 
-            const project: Project | null = await projectModel.findById(
+            const project: Project | null = await subSectionModel.findById(
                 newData._id,
             );
 
@@ -141,9 +157,19 @@ describe("POST /resources/add-resources", () => {
 
             // Assert
             expect(response.statusCode).toBe(201);
-            expect(project?.resources[1].isApproved).toBe(false);
+            expect(project?.resources[1].isApproved).toBe(true);
             expect(project?.resources[1].status).toBe(ResourcesStatus.PENDING);
             expect(project?.resources[1].userRole).toBe(Roles.CONSULTANT);
+            expect(response.body).toHaveProperty("result");
+            expect(response.body.result).toHaveProperty("_id");
+            expect(response.body.result).toHaveProperty("projectName");
+            expect(response.body.result).toHaveProperty(
+                "matchedResourcesProject",
+            );
+            expect(response.body.result).toHaveProperty("matchingSubProjects");
+            expect(response.body.result).toHaveProperty(
+                "notMatchingSubProjects",
+            );
         });
     });
 });

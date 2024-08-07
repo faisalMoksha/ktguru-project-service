@@ -47,6 +47,13 @@ router.post(
 );
 
 router.post(
+    "/add-in-subsection",
+    authenticate,
+    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
+    asyncWrapper(resourcesController.addInSubSection),
+);
+
+router.post(
     "/remove",
     authenticate,
     canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
@@ -54,14 +61,7 @@ router.post(
 );
 
 router.post(
-    "/add-sub-section",
-    authenticate,
-    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
-    asyncWrapper(resourcesController.addInSubSection),
-);
-
-router.post(
-    "/add-company",
+    "/add-company-admin",
     authenticate,
     canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
     asyncWrapper(resourcesController.addInCompany),
@@ -74,10 +74,10 @@ router.post(
     asyncWrapper(resourcesController.removeFromCompany),
 );
 
+router.post("/signup/:token", asyncWrapper(resourcesController.signupUser));
+
 router.get("/verify/:token", asyncWrapper(resourcesController.verifyResource));
 
 router.get("/decline/:token", asyncWrapper(resourcesController.declineInvite));
-
-router.post("/signup/:token", asyncWrapper(resourcesController.signupUser));
 
 export default router;

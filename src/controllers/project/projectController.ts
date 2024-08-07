@@ -4,14 +4,16 @@ import { Logger } from "winston";
 import createHttpError from "http-errors";
 import { ProjectService } from "../../services/projectService";
 import { validationResult } from "express-validator";
+import { ApiCallService } from "../../services/apiCallService";
 
 export class ProjectController {
     constructor(
         private logger: Logger,
         private projectService: ProjectService,
+        private apiCallService: ApiCallService,
     ) {}
 
-    create = async (req: Request, res: Response, next: NextFunction) => {
+    create = async (req: AuthRequest, res: Response, next: NextFunction) => {
         const { projectName, projectDesc, technology, companyId } = req.body;
 
         const result = validationResult(req);
@@ -27,11 +29,29 @@ export class ProjectController {
         });
 
         try {
+            if (!req.auth || !req.auth.sub) {
+                return next(
+                    createHttpError(400, "Unauthorized access to project"),
+                );
+            }
+
+            const createdBy = req.auth.sub;
+
+            const resource =
+                await this.apiCallService.getCompanyResourceData(companyId);
+
+            if (!resource) {
+                const error = createHttpError(400, "Teams data not found");
+                return next(error);
+            }
+
             const project = await this.projectService.create({
                 projectName,
                 projectDesc,
                 technology,
                 companyId,
+                resource,
+                createdBy,
             });
 
             res.status(201).json({
@@ -68,7 +88,9 @@ export class ProjectController {
     getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
         try {
             if (!req.auth || !req.auth.sub) {
-                return next(createHttpError(400, "Something went wrong"));
+                return next(
+                    createHttpError(400, "Unauthorized access to project"),
+                );
             }
 
             const userId = req.auth.sub;
@@ -96,7 +118,7 @@ export class ProjectController {
                 return;
             }
 
-            res.json(data);
+            res.status(200).json(data);
         } catch (err) {
             next(err);
         }

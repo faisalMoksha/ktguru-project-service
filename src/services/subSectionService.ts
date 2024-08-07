@@ -1,7 +1,7 @@
 import { AddUserInProject, RequestBody } from "../types";
-import subSectionModel from "../models/project/subSectionModel";
+import subSectionModel from "../models/subSectionModel";
 import createHttpError from "http-errors";
-import projectModel from "../models/project/projectModel";
+import projectModel from "../models/projectModel";
 import { ResourcesStatus, Roles } from "../constants";
 
 export class SubSectionService {
@@ -10,6 +10,7 @@ export class SubSectionService {
         projectDesc,
         technology,
         projectId,
+        createdBy,
     }: RequestBody) {
         //TODO:1. populate some data and send response
         //TODO:2. create subsection chat
@@ -62,7 +63,7 @@ export class SubSectionService {
             projectDesc,
             technology,
             projectId,
-            createdBy: "6512a4c42a6759c77211660e",
+            createdBy: createdBy,
             isActive: true,
             resources: resourcesArray,
         });
@@ -178,43 +179,24 @@ export class SubSectionService {
 
     async bulkAdd(userId: string, subSectionIds: [string]) {
         return await subSectionModel.bulkWrite(
-            subSectionIds
-                .map((subSectionId) => [
-                    {
-                        updateOne: {
-                            filter: {
-                                _id: subSectionId,
-                                "resources.userId": userId,
-                            },
-                            update: {
-                                $set: {
-                                    "resources.$.status":
-                                        ResourcesStatus.PENDING,
-                                },
+            subSectionIds.map((subSectionId) => ({
+                updateOne: {
+                    filter: {
+                        _id: subSectionId,
+                        "resources.userId": { $ne: userId },
+                    },
+                    update: {
+                        $addToSet: {
+                            resources: {
+                                userRole: Roles.CONSULTANT,
+                                userId: userId,
+                                isApproved: false,
+                                createdAt: new Date(),
                             },
                         },
                     },
-                    {
-                        updateOne: {
-                            filter: {
-                                _id: subSectionId,
-                                "resources.userId": { $ne: userId },
-                            },
-                            update: {
-                                $addToSet: {
-                                    resources: {
-                                        userRole: Roles.CONSULTANT,
-                                        userId: userId,
-                                        isApproved: false,
-                                        createdAt: new Date(),
-                                        status: ResourcesStatus.PENDING,
-                                    },
-                                },
-                            },
-                        },
-                    },
-                ])
-                .flat(),
+                },
+            })),
         );
     }
 

@@ -63,12 +63,15 @@ export interface RequestBody {
     technology?: string;
     companyId?: mongoose.Types.ObjectId;
     projectId?: mongoose.Types.ObjectId;
+    resource?: [];
+    createdBy?: string;
 }
 
 export interface AddUserInProject {
     userId: string;
     projectId: string;
     role?: string;
+    status?: string;
 }
 
 export interface AddResourcePayload {
@@ -86,6 +89,7 @@ export interface VerificationToken {
     chatId: mongoose.Types.ObjectId;
     companyId: string;
     createdAt: Date;
+    _id: string;
 }
 
 export interface SignupUser {

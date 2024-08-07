@@ -11,7 +11,7 @@ import { Project } from "../../src/types";
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe("POST /resources/add-resources", () => {
+describe("POST /resources/add-company-admin", () => {
     let jwks: ReturnType<typeof createJWKSMock>;
 
     beforeEach(async () => {
@@ -29,7 +29,7 @@ describe("POST /resources/add-resources", () => {
 
     describe("Given all fields", () => {
         it("should return the 201 status code and return valid json response", async () => {
-            const newData = await projectModel.create({
+            await projectModel.create({
                 projectName: "M-Attendes",
                 projectDesc: "This is project description",
                 technology: "Dart",
@@ -48,8 +48,9 @@ describe("POST /resources/add-resources", () => {
             // Arrange
             const data = {
                 email: "example@gmail.com",
-                projectId: newData._id,
-                role: Roles.CONSULTANT,
+                companyId: "651d94b37c81f740f30892de",
+                name: "faisal",
+                message: "lorem Ips",
                 // subSectionIds: ["66b1b21fe3db306be0347c53"],
             };
 
@@ -68,7 +69,7 @@ describe("POST /resources/add-resources", () => {
 
             // Act
             const response = await request(app)
-                .post("/resources")
+                .post("/resources/add-company-admin")
                 .set("Cookie", [`accessToken=${accessToken}`])
                 .send(data);
 
@@ -81,9 +82,9 @@ describe("POST /resources/add-resources", () => {
                 `${Config.USER_SERVICE_URI}/users/add-resource`,
                 {
                     email: "example@gmail.com",
-                    role: Roles.CONSULTANT,
-                    projectId: String(newData._id),
-                    companyId: undefined,
+                    role: Roles.COMPANY_ADMIN,
+                    companyId: "651d94b37c81f740f30892de",
+                    projectId: undefined,
                 },
             );
         });
@@ -107,8 +108,9 @@ describe("POST /resources/add-resources", () => {
             // Arrange
             const data = {
                 email: "example@gmail.com",
-                projectId: newData._id,
-                role: Roles.CONSULTANT,
+                companyId: "651d94b37c81f740f30892de",
+                name: "faisal",
+                message: "lorem Ips",
                 // subSectionIds: ["66b1b21fe3db306be0347c53"],
             };
 
@@ -127,7 +129,7 @@ describe("POST /resources/add-resources", () => {
 
             // Act
             const response = await request(app)
-                .post("/resources")
+                .post("/resources/add-company-admin")
                 .set("Cookie", [`accessToken=${accessToken}`])
                 .send(data);
 
@@ -143,7 +145,7 @@ describe("POST /resources/add-resources", () => {
             expect(response.statusCode).toBe(201);
             expect(project?.resources[1].isApproved).toBe(false);
             expect(project?.resources[1].status).toBe(ResourcesStatus.PENDING);
-            expect(project?.resources[1].userRole).toBe(Roles.CONSULTANT);
+            expect(project?.resources[1].userRole).toBe(Roles.COMPANY_ADMIN);
         });
     });
 });

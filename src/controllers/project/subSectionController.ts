@@ -10,7 +10,7 @@ export class SubSectionController {
         private subSectionService: SubSectionService,
     ) {}
 
-    create = async (req: Request, res: Response, next: NextFunction) => {
+    create = async (req: AuthRequest, res: Response, next: NextFunction) => {
         const { projectName, projectDesc, technology, projectId } = req.body;
 
         this.logger.debug("Request to craete sub section", {
@@ -21,11 +21,20 @@ export class SubSectionController {
         });
 
         try {
+            if (!req.auth || !req.auth.sub) {
+                return next(
+                    createHttpError(400, "Unauthorized access to project"),
+                );
+            }
+
+            const createdBy = req.auth.sub;
+
             const project = await this.subSectionService.create({
                 projectName,
                 projectDesc,
                 technology,
                 projectId,
+                createdBy,
             });
 
             res.status(201).json({

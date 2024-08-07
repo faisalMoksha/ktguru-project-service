@@ -2,7 +2,7 @@ import { Request, NextFunction, Response } from "express";
 import { Logger } from "winston";
 import { Request as AuthRequest } from "express-jwt";
 import createHttpError from "http-errors";
-import { Roles } from "../../constants";
+import { ResourcesStatus, Roles } from "../../constants";
 import { ApiCallService } from "../../services/apiCallService";
 import { ProjectService } from "../../services/projectService";
 import { SubSectionService } from "../../services/subSectionService";
@@ -19,7 +19,7 @@ export class ResourcesController {
     ) {}
 
     add = async (req: Request, res: Response, next: NextFunction) => {
-        //TODO:1. add userId in project chat
+        //TODO:1. add userId in project chat group
         //TODO:2. add userId in sub-setion chat if needed
         //TODO:3. check subscription
         //TODO:4. check resource limit
@@ -51,7 +51,7 @@ export class ResourcesController {
 
             await this.projectService.addUserInProject(
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                { userId: user.userId, projectId },
+                { userId: user.userId, projectId, role },
             );
 
             if (role == Roles.PROJECT_ADMIN) {
@@ -76,7 +76,6 @@ export class ResourcesController {
             });
         } catch (error) {
             return next(error);
-            // return res.status(400).json(error);
         }
     };
 
@@ -129,6 +128,7 @@ export class ResourcesController {
                 const project = await this.projectService.removedUser({
                     userId,
                     projectId,
+                    status: ResourcesStatus.REMOVED_BY_ADMIN,
                 });
 
                 await this.subSectionService.removedUser({ userId, projectId });
@@ -139,14 +139,17 @@ export class ResourcesController {
                     updatedProject: project,
                 });
             } else {
-                await this.subSectionService.removedUserFromOne({
-                    userId,
-                    projectId,
-                });
+                const subsection =
+                    await this.subSectionService.removedUserFromOne({
+                        userId,
+                        projectId,
+                    });
 
+                // prepare projectId
+                const id = subsection ? String(subsection.projectId) : "";
                 const result = await this.resourcesService.formatResources({
                     userId,
-                    projectId,
+                    projectId: id,
                 });
 
                 res.status(200).json({
@@ -180,13 +183,15 @@ export class ResourcesController {
                 return next(error);
             }
 
+            const id = data ? String(data.projectId) : "";
+
             const result = await this.resourcesService.formatResources({
                 userId,
-                projectId: String(data?.projectId),
+                projectId: id,
             });
 
-            res.status(200).json({
-                message: "TThe user added in sub section",
+            res.status(201).json({
+                message: "The user added in sub section",
                 result,
                 // allSubProjects, //TODO: check this
             });
@@ -229,7 +234,7 @@ export class ResourcesController {
             const userId = user.userId;
             await this.projectService.AddCompanyManager(userId, companyId);
 
-            res.status(200).json({
+            res.status(201).json({
                 message: "The recipient has been invited as per your request",
                 // user: userObj, //TODO: check this
             });
@@ -246,9 +251,12 @@ export class ResourcesController {
         const { companyId, userId } = req.body;
 
         try {
+            const status = ResourcesStatus.REMOVED_BY_ADMIN;
+
             const user = await this.apiCallService.removedFromCompany(
                 companyId,
                 userId,
+                status,
             );
 
             if (!user) {
@@ -256,74 +264,18 @@ export class ResourcesController {
                 return next(error);
             }
 
-            await this.projectService.removedUserFromCompany(userId, companyId);
+            const isRejectedByUser = false;
+            await this.projectService.removedUserFromCompany(
+                userId,
+                companyId,
+                status,
+                isRejectedByUser,
+            );
 
             res.status(200).json({
                 message: "The user remove from company",
                 // userObj, //TODO: check this
                 // allProjectData,
-            });
-        } catch (error) {
-            return next(error);
-        }
-    };
-
-    verifyResource = async (
-        req: Request,
-        res: Response,
-        next: NextFunction,
-    ) => {
-        const token = req.params.token;
-
-        try {
-            const tokenData: VerificationToken =
-                await this.apiCallService.getToken(token);
-
-            if (!tokenData) {
-                const error = createHttpError(
-                    400,
-                    "The link you followed seems to be incorrect or no longer active.",
-                );
-                return next(error);
-            }
-
-            //TODO:1. check subscription
-            //TODO:2. check resource length
-
-            await this.projectService.verifyResource({
-                projectId: tokenData.projectId,
-                userId: tokenData.userId,
-            });
-
-            //TODO:3. send token for redirect on home page
-            //TODO:4. delete token
-            res.status(200).json(tokenData);
-        } catch (error) {
-            return next(error);
-        }
-    };
-
-    declineInvite = async (req: Request, res: Response, next: NextFunction) => {
-        const token = req.params.token;
-
-        try {
-            const tokenData: VerificationToken =
-                await this.apiCallService.getToken(token);
-
-            if (!tokenData) {
-                const error = createHttpError(
-                    400,
-                    "The link you followed seems to be incorrect or no longer active.",
-                );
-                return next(error);
-            }
-
-            //TODO:1. add mail send function
-            //TODO:2. delete token
-
-            res.status(200).json({
-                sucess: true,
-                message: "Declined invitaion",
             });
         } catch (error) {
             return next(error);
@@ -376,10 +328,108 @@ export class ResourcesController {
                 );
             }
 
-            //TODO:2. delete token
+            await this.apiCallService.deleteToken(tokenData._id);
+
             //TODO:2. prepare login credentials and send
 
+            res.status(201).json({ success: true, message: "Done!" });
+        } catch (error) {
+            return next(error);
+        }
+    };
+
+    verifyResource = async (
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        const token = req.params.token;
+
+        try {
+            const tokenData: VerificationToken =
+                await this.apiCallService.getToken(token);
+
+            if (!tokenData) {
+                const error = createHttpError(
+                    400,
+                    "The link you followed seems to be incorrect or no longer active.",
+                );
+                return next(error);
+            }
+
+            //TODO:1. check subscription
+            //TODO:2. check resource length
+
+            await this.projectService.verifyResource({
+                projectId: tokenData.projectId,
+                userId: tokenData.userId,
+            });
+
+            //TODO:3. send token for redirect on home page
+            //TODO:4. isApproved true for company
+
+            await this.apiCallService.deleteToken(tokenData._id);
+
             res.status(200).json({ success: true, message: "Done!" });
+        } catch (error) {
+            return next(error);
+        }
+    };
+
+    declineInvite = async (req: Request, res: Response, next: NextFunction) => {
+        const token = req.params.token;
+
+        try {
+            const tokenData: VerificationToken =
+                await this.apiCallService.getToken(token);
+
+            if (!tokenData) {
+                const error = createHttpError(
+                    400,
+                    "The link you followed seems to be incorrect or no longer active.",
+                );
+                return next(error);
+            }
+
+            if (tokenData.projectId) {
+                await this.projectService.removedUser({
+                    userId: tokenData.userId,
+                    projectId: tokenData.projectId,
+                    status: ResourcesStatus.REJECTED_BY_USER,
+                });
+            }
+
+            if (tokenData.companyId) {
+                const status = ResourcesStatus.REJECTED_BY_USER;
+
+                const user = await this.apiCallService.removedFromCompany(
+                    tokenData.companyId,
+                    tokenData.userId,
+                    status,
+                );
+
+                if (!user) {
+                    const error = createHttpError(400, "User not found");
+                    return next(error);
+                }
+
+                const isRejectedByUser = true;
+                await this.projectService.removedUserFromCompany(
+                    tokenData.userId,
+                    tokenData.companyId,
+                    status,
+                    isRejectedByUser,
+                );
+            }
+
+            //TODO:1. add mail send function
+
+            await this.apiCallService.deleteToken(tokenData._id);
+
+            res.status(200).json({
+                sucess: true,
+                message: "Declined invitaion",
+            });
         } catch (error) {
             return next(error);
         }

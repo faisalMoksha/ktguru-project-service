@@ -36,9 +36,13 @@ router.patch(
 );
 
 // get all sub section
-router.get("/all/:id", authenticate, asyncWrapper(subSectionController.getAll));
+router.get("/:id", authenticate, asyncWrapper(subSectionController.getAll));
 
 // get sub section
-router.get("/:id", authenticate, asyncWrapper(subSectionController.getOne));
+router.get(
+    "/single/:id",
+    authenticate,
+    asyncWrapper(subSectionController.getOne),
+);
 
 export default router;

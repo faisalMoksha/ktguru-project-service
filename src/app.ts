@@ -14,7 +14,7 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
-    res.send("Welcome to Auth Service");
+    res.send("Welcome to Project Service");
 });
 
 app.use("/project", projectRouter);

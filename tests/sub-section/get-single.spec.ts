@@ -1,10 +1,10 @@
 import request from "supertest";
-import app from "../../src/app";
 import mongoose from "mongoose";
-import { Config } from "../../src/config";
 import createJWKSMock from "mock-jwks";
+import { Config } from "../../src/config";
 import { ResourcesStatus, Roles } from "../../src/constants";
-import subSectionModel from "../../src/models/project/subSectionModel";
+import app from "../../src/app";
+import subSectionModel from "../../src/models/subSectionModel";
 
 describe("GET /subsection/get-one", () => {
     let jwks: ReturnType<typeof createJWKSMock>;
@@ -53,7 +53,7 @@ describe("GET /subsection/get-one", () => {
 
             // Act
             const response = await request(app)
-                .get(`/sub-section/${newData._id}`)
+                .get(`/sub-section/single/${newData._id}`)
                 .set("Cookie", [`accessToken=${accessToken}`]);
 
             // Assert

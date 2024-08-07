@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import { ResourcesStatus, Roles } from "../../constants";
-import { SubSection } from "../../types";
+import { Project } from "../types";
+import { ResourcesStatus, Roles } from "../constants";
 
-const subSectionSchema = new mongoose.Schema<SubSection>(
+const projectSchema = new mongoose.Schema<Project>(
     {
         projectName: {
             type: String,
@@ -18,9 +18,9 @@ const subSectionSchema = new mongoose.Schema<SubSection>(
             ref: "User",
             required: true,
         },
-        projectId: {
+        companyId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Project",
+            ref: "Company",
             required: true,
         },
         isActive: {
@@ -61,4 +61,4 @@ const subSectionSchema = new mongoose.Schema<SubSection>(
     { timestamps: true },
 );
 
-export default mongoose.model<SubSection>("SubSection", subSectionSchema);
+export default mongoose.model<Project>("Project", projectSchema);
