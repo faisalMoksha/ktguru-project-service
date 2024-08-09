@@ -264,7 +264,7 @@ export class ProjectService {
 
         return null;
 
-        //TODO:1. remove fro chat group
+        //TODO:1. remove from chat group
     }
 
     async verifyResource({ projectId, userId }: AddUserInProject) {

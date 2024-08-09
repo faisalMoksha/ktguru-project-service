@@ -84,7 +84,7 @@ export class ResourcesController {
 
         const data = await this.projectService.getResources(projectId);
 
-        //TODO: populate user data and send in response
+        //TODO:1. populate user data and send in response
         res.status(200).json({ resources: data?.resources });
     };
 
@@ -155,7 +155,7 @@ export class ResourcesController {
                 res.status(200).json({
                     message: "The user remove from project",
                     result,
-                    // allSubProjects, //TODO: check this
+                    // allSubProjects, //TODO:1 check this
                 });
             }
         } catch (error) {
@@ -193,7 +193,7 @@ export class ResourcesController {
             res.status(201).json({
                 message: "The user added in sub section",
                 result,
-                // allSubProjects, //TODO: check this
+                // allSubProjects, //TODO:1. check this
             });
         } catch (error) {
             return next(error);
@@ -236,7 +236,7 @@ export class ResourcesController {
 
             res.status(201).json({
                 message: "The recipient has been invited as per your request",
-                // user: userObj, //TODO: check this
+                // user: userObj, //TODO:6. check this
             });
         } catch (error) {
             return next(error);
@@ -274,7 +274,7 @@ export class ResourcesController {
 
             res.status(200).json({
                 message: "The user remove from company",
-                // userObj, //TODO: check this
+                // userObj, //TODO:1. check this
                 // allProjectData,
             });
         } catch (error) {

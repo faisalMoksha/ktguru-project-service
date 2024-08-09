@@ -31,7 +31,7 @@ export class SubSectionService {
         }
 
         const projectData = await projectModel.findById(projectId);
-        // .populate("companyId", "teams"); //TODO: uncomment
+        // .populate("companyId", "teams"); //TODO:3. uncomment (populate company data)
 
         if (!projectData) {
             const error = createHttpError(500, `Project data not found`);
@@ -117,7 +117,7 @@ export class SubSectionService {
                 },
             ],
         });
-        // .populate("resources.userId", "lastName firstName avatar email"); //TODO: uncomment this line
+        // .populate("resources.userId", "lastName firstName avatar email"); //TODO:1. uncomment this line
     }
 
     async findById(id: string) {
