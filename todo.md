@@ -8,4 +8,6 @@ docker run -d --name ktguru-mongodb -p 27017:27017 mongo
 
 docker run -d --rm --name ktguru-mongodb -p 27017:27017 -v /path/on/host:/data/db mongo
 
-docker build -t ktguru_test_prod_image -f docker/prod/Dockerfile .
+<!-- build image -->
+
+docker build -t ktguru_project_service_image -f docker/prod/Dockerfile .
