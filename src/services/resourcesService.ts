@@ -17,7 +17,7 @@ export class ResourcesServices {
 
         const subProjects = await subSectionService.getAll(userId, projectId);
 
-        const matchingSubProjects = subProjects.reduce<ProjectResource[]>(
+        const matchingSubSection = subProjects.reduce<ProjectResource[]>(
             (acc, subProject) => {
                 const matchedResource = subProject.resources.find(
                     (resource) => resource.userId._id.toString() === userId,
@@ -47,7 +47,7 @@ export class ResourcesServices {
             projectId,
         });
 
-        const notMatchingSubProjects = notPresentSubProjects.map(
+        const notMatchingSubSection = notPresentSubProjects.map(
             (subProject) => ({
                 id: subProject._id,
                 projectName: subProject.projectName,
@@ -61,8 +61,8 @@ export class ResourcesServices {
                 _id,
                 projectName,
                 matchedResourcesProject,
-                matchingSubProjects,
-                notMatchingSubProjects,
+                matchingSubSection,
+                notMatchingSubSection,
             };
 
             return result;

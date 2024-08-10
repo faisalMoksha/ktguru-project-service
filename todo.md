@@ -1,13 +1,3 @@
-<!-- # Pull latest mongodb image -->
+<!-- 10-08-2024 -->
 
-docker pull mongo:latest
-
-<!-- # Run MongoDB image as a container -->
-
-docker run -d --name ktguru-mongodb -p 27017:27017 mongo
-
-docker run -d --rm --name ktguru-mongodb -p 27017:27017 -v /path/on/host:/data/db mongo
-
-<!-- build image -->
-
-docker build -t ktguru_project_service_image -f docker/prod/Dockerfile .
+[] 2. Implement Indexing in mongoose schema.

@@ -84,6 +84,7 @@ describe("POST /resources/add-resources", () => {
                     role: Roles.CONSULTANT,
                     projectId: String(newData._id),
                     companyId: undefined,
+                    addedBy: "6512a4c42a6759c77211660e",
                 },
             );
         });

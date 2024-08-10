@@ -3,7 +3,13 @@ import { Config } from "../config";
 import { AddResourcePayload, SignupUser } from "../types";
 
 export class ApiCallService {
-    async addUser({ email, role, companyId, projectId }: AddResourcePayload) {
+    async addUser({
+        email,
+        role,
+        companyId,
+        projectId,
+        addedBy,
+    }: AddResourcePayload) {
         try {
             const response = await axios.post(
                 `${Config.USER_SERVICE_URI}/users/add-resource`,
@@ -12,6 +18,7 @@ export class ApiCallService {
                     role,
                     companyId,
                     projectId,
+                    addedBy,
                 },
             );
 

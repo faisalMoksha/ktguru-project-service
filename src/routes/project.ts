@@ -20,7 +20,9 @@ const projectController = new ProjectController(
     apiCallService,
 );
 
-// create project
+/**
+ * create project endpoint
+ */
 router.post(
     "/",
     authenticate,
@@ -29,7 +31,9 @@ router.post(
     asyncWrapper(projectController.create),
 );
 
-// update project
+/**
+ * update project endpoint
+ */
 router.patch(
     "/:id",
     authenticate,
@@ -38,10 +42,14 @@ router.patch(
     asyncWrapper(projectController.update),
 );
 
-// get all projects
+/**
+ * get all project endpoint
+ */
 router.get("/", authenticate, asyncWrapper(projectController.getAll));
 
-// get single project
+/**
+ * get single project endpoint
+ */
 router.get("/:id", authenticate, asyncWrapper(projectController.getOne));
 
 export default router;

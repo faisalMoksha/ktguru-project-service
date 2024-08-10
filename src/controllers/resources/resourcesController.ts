@@ -18,7 +18,7 @@ export class ResourcesController {
         private resourcesService: ResourcesServices,
     ) {}
 
-    add = async (req: Request, res: Response, next: NextFunction) => {
+    add = async (req: AuthRequest, res: Response, next: NextFunction) => {
         //TODO:1. add userId in project chat group
         //TODO:2. add userId in sub-setion chat if needed
         //TODO:3. check subscription
@@ -38,10 +38,17 @@ export class ResourcesController {
         });
 
         try {
+            if (!req.auth || !req.auth.sub) {
+                return next(createHttpError(400, "Something went wrong"));
+            }
+
+            const addedBy = req.auth.sub;
+
             const user = await this.apiCallService.addUser({
                 email,
                 role,
                 projectId,
+                addedBy,
             });
 
             if (!user) {

@@ -25,6 +25,9 @@ const resourcesController = new ResourcesController(
     resourcesService,
 );
 
+/**
+ * add resoure endpoint
+ */
 router.post(
     "/",
     authenticate,
@@ -32,6 +35,9 @@ router.post(
     asyncWrapper(resourcesController.add),
 );
 
+/**
+ * get resoure endpoint
+ */
 router.get(
     "/:id",
     authenticate,
@@ -39,6 +45,9 @@ router.get(
     asyncWrapper(resourcesController.get),
 );
 
+/**
+ * get resoure details endpoint
+ */
 router.post(
     "/detail",
     authenticate,
@@ -46,6 +55,9 @@ router.post(
     asyncWrapper(resourcesController.getDetails),
 );
 
+/**
+ * add in subsection endpoint
+ */
 router.post(
     "/add-in-subsection",
     authenticate,
@@ -53,6 +65,9 @@ router.post(
     asyncWrapper(resourcesController.addInSubSection),
 );
 
+/**
+ * remove resource from project endpoint
+ */
 router.post(
     "/remove",
     authenticate,
@@ -60,6 +75,9 @@ router.post(
     asyncWrapper(resourcesController.remove),
 );
 
+/**
+ * add resource in company as admin endpoint
+ */
 router.post(
     "/add-company-admin",
     authenticate,
@@ -67,6 +85,9 @@ router.post(
     asyncWrapper(resourcesController.addInCompany),
 );
 
+/**
+ * remove company admin resource endpoint
+ */
 router.post(
     "/remove-company",
     authenticate,
@@ -74,10 +95,19 @@ router.post(
     asyncWrapper(resourcesController.removeFromCompany),
 );
 
+/**
+ * signup resource endpoint
+ */
 router.post("/signup/:token", asyncWrapper(resourcesController.signupUser));
 
+/**
+ * verify resource request endpoint
+ */
 router.get("/verify/:token", asyncWrapper(resourcesController.verifyResource));
 
+/**
+ * decline resource request endpoint
+ */
 router.get("/decline/:token", asyncWrapper(resourcesController.declineInvite));
 
 export default router;

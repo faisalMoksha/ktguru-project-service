@@ -71,8 +71,8 @@ describe("POST /resources/get-resources-details", () => {
             expect(response.body).toHaveProperty("_id");
             expect(response.body).toHaveProperty("projectName");
             expect(response.body).toHaveProperty("matchedResourcesProject");
-            expect(response.body).toHaveProperty("matchingSubProjects");
-            expect(response.body).toHaveProperty("notMatchingSubProjects");
+            expect(response.body).toHaveProperty("matchingSubSection");
+            expect(response.body).toHaveProperty("notMatchingSubSection");
         });
     });
 });

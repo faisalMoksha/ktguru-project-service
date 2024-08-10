@@ -17,7 +17,9 @@ const subSectionController = new SubSectionController(
     subSectionService,
 );
 
-// create sub section
+/**
+ * create sub section endpoint
+ */
 router.post(
     "/",
     authenticate,
@@ -26,7 +28,9 @@ router.post(
     asyncWrapper(subSectionController.create),
 );
 
-// update sub section
+/**
+ * update sub section endpoint
+ */
 router.patch(
     "/:id",
     authenticate,
@@ -35,10 +39,14 @@ router.patch(
     asyncWrapper(subSectionController.update),
 );
 
-// get all sub section
+/**
+ * get all sub section endpoint
+ */
 router.get("/:id", authenticate, asyncWrapper(subSectionController.getAll));
 
-// get sub section
+/**
+ * get single sub section endpoint
+ */
 router.get(
     "/single/:id",
     authenticate,

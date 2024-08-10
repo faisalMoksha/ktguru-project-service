@@ -79,6 +79,7 @@ export interface AddResourcePayload {
     companyId?: string;
     role?: string;
     projectId?: string;
+    addedBy?: string;
 }
 
 export interface VerificationToken {

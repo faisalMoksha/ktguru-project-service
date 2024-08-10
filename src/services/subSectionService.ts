@@ -76,7 +76,7 @@ export class SubSectionService {
         technology,
         projectId,
     }: RequestBody) {
-        // TODO:1. also change chta group name
+        // TODO:1. also change chat group name
         try {
             const findProject = await subSectionModel.find({
                 $and: [
