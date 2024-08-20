@@ -14,6 +14,7 @@ const {
     BACKEND_URL,
     JWKS_URI,
     USER_SERVICE_URI,
+    KAFKA_BROKER,
 } = process.env;
 
 export const Config = {
@@ -25,4 +26,5 @@ export const Config = {
     BACKEND_URL,
     JWKS_URI,
     USER_SERVICE_URI,
+    KAFKA_BROKER,
 };

@@ -13,3 +13,7 @@ export const ResourcesStatus = {
     REMOVED_BY_ADMIN: "removedByAdmin",
     REJECTED_BY_USER: "rejectedByUser",
 } as const;
+
+export const KafKaTopic = {
+    User: "user",
+} as const;
