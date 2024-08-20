@@ -100,3 +100,15 @@ export interface SignupUser {
     userId: string;
     companyId: string | null;
 }
+
+export interface UserCache {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    avatar: string;
+}
+
+export interface MessagePayload {
+    event_type: string;
+    data: UserCache;
+}

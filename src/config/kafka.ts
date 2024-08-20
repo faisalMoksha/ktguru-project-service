@@ -1,6 +1,8 @@
 import { Consumer, EachMessagePayload, Kafka } from "kafkajs";
 import { MessageBroker } from "../types/broker";
 import logger from "./logger";
+import { KafKaTopic } from "../constants";
+import { handleUserUpdate } from "../utils/userUpdateHandler";
 
 export class KafkaBroker implements MessageBroker {
     private consumer: Consumer;
@@ -34,7 +36,15 @@ export class KafkaBroker implements MessageBroker {
                 partition,
                 message,
             }: EachMessagePayload) => {
-                // TODO: Logic to handle incoming messages
+                switch (topic) {
+                    case KafKaTopic.User:
+                        await handleUserUpdate(
+                            message.value ? message.value.toString() : "",
+                        );
+                        return;
+                    default:
+                        logger.info("Doing nothing...");
+                }
 
                 logger.info({
                     value: message.value?.toString(),
