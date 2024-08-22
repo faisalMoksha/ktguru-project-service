@@ -12,26 +12,33 @@ export class ProjectService {
         companyId,
         resource,
         createdBy,
+        companyName,
     }: RequestBody) {
-        //TODO:1. check subscription is active
-        //TODO:2. check project limit
-        //TODO:3. populate some data and send response
-        //TODO:4. create project chat
+        //TODO:1. Check subscription is active
+        //TODO:2. Check project limit
 
-        return await projectModel.create({
+        let data = await projectModel.create({
             projectName,
             projectDesc,
             technology,
             companyId,
+            companyName: companyName,
             createdBy: createdBy,
             isActive: true,
             resources: resource,
         });
+
+        data = await data.populate({
+            path: "resources.userId",
+            model: "UserCache",
+            select: "firstName lastName avatar",
+            foreignField: "userId",
+        });
+
+        return data;
     }
 
     async update({ _id, projectName, projectDesc, technology }: RequestBody) {
-        //TODO:1. update project chat group name
-
         try {
             return await projectModel.findByIdAndUpdate(
                 _id,
@@ -47,13 +54,19 @@ export class ProjectService {
     }
 
     async getAll(userId: string) {
-        //TODO:1. check old code
-        //TODO:2. populate some data
-        return await projectModel.find({
-            resources: {
-                $elemMatch: { userId: userId, isApproved: true },
-            },
-        });
+        //TODO:1. Check old code
+        return await projectModel
+            .find({
+                resources: {
+                    $elemMatch: { userId: userId, isApproved: true },
+                },
+            })
+            .populate({
+                path: "resources.userId",
+                model: "UserCache",
+                select: "firstName lastName avatar",
+                foreignField: "userId",
+            });
     }
 
     async findById(id: string) {
@@ -118,24 +131,35 @@ export class ProjectService {
     }
 
     async getResources(projectId: string) {
-        return await projectModel.findOne({ _id: projectId });
+        return await projectModel.findOne({ _id: projectId }).populate({
+            path: "resources.userId",
+            model: "UserCache",
+            select: "firstName lastName avatar",
+            foreignField: "userId",
+        });
     }
 
     async removedUser({ userId, projectId, status }: AddUserInProject) {
-        //TODO: populate user data
-        return await projectModel.findOneAndUpdate(
-            {
-                _id: projectId,
-                resources: { $elemMatch: { userId: userId } },
-            },
-            {
-                $set: {
-                    "resources.$.isApproved": false,
-                    "resources.$.status": status,
+        return await projectModel
+            .findOneAndUpdate(
+                {
+                    _id: projectId,
+                    resources: { $elemMatch: { userId: userId } },
                 },
-            },
-            { new: true },
-        );
+                {
+                    $set: {
+                        "resources.$.isApproved": false,
+                        "resources.$.status": status,
+                    },
+                },
+                { new: true },
+            )
+            .populate({
+                path: "resources.userId",
+                model: "UserCache",
+                select: "firstName lastName avatar",
+                foreignField: "userId",
+            });
     }
 
     async AddCompanyManager(userId: string, companyId: string) {
@@ -162,11 +186,7 @@ export class ProjectService {
         });
 
         if (checkMemberIsApproved) {
-            //TODO:1. generate and saved verification token
-            //TODO:2. send mail
-            //TODO:2. send user obj
-
-            return true;
+            return { isApproved: true };
         }
 
         // Update projects
@@ -186,10 +206,12 @@ export class ProjectService {
         // Get project IDs
         const projectIds = await projectModel.distinct("_id", { companyId });
 
-        // Get subproject IDs
+        // Get subSection IDs
         const subSectionIds = await subSectionModel.distinct("_id", {
             projectId: { $in: projectIds },
         });
+
+        const combinedIds = [...projectIds, ...subSectionIds];
 
         // Prepare bulk update operation
         const bulkOps = subSectionIds.map((id) => ({
@@ -208,11 +230,9 @@ export class ProjectService {
         }));
 
         // Execute bulk update
-        return await subSectionModel.bulkWrite(bulkOps, { ordered: false });
+        await subSectionModel.bulkWrite(bulkOps, { ordered: false });
 
-        //TODO:1. Generate and saved the varification token
-        //TODO:2. Send mail notification
-        //TODO:3. add user in chat group
+        return { combinedIds: combinedIds };
     }
 
     async removedUserFromCompany(
@@ -263,8 +283,6 @@ export class ProjectService {
         }
 
         return null;
-
-        //TODO:1. remove from chat group
     }
 
     async verifyResource({ projectId, userId }: AddUserInProject) {
@@ -288,8 +306,6 @@ export class ProjectService {
             },
             { $set: { "resources.$.isApproved": true } },
         );
-
-        //TODO:1. also need to do with chat both project and subsections
     }
 
     async verifyCompanyManager(userId: string, companyId: string) {
@@ -328,8 +344,10 @@ export class ProjectService {
             },
         );
 
-        //TODO:1. add in chat group for both
-
         return result;
+    }
+
+    async getProjectsIds(companyId: string) {
+        return await projectModel.distinct("_id", { companyId });
     }
 }

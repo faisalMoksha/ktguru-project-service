@@ -15,18 +15,18 @@ export class ResourcesServices {
             throw error;
         }
 
-        const subProjects = await subSectionService.getAll(userId, projectId);
+        const subsection = await subSectionService.getAll(userId, projectId);
 
-        const matchingSubSection = subProjects.reduce<ProjectResource[]>(
-            (acc, subProject) => {
-                const matchedResource = subProject.resources.find(
+        const matchingSubSection = subsection.reduce<ProjectResource[]>(
+            (acc, subsectionData) => {
+                const matchedResource = subsectionData.resources.find(
                     (resource) => resource.userId._id.toString() === userId,
                 );
 
                 if (matchedResource) {
                     acc.push({
-                        _id: subProject._id,
-                        projectName: subProject.projectName,
+                        _id: subsectionData._id,
+                        projectName: subsectionData.projectName,
                         // @ts-ignore
                         userId: matchedResource.userId,
                         userRole: matchedResource.userRole,
@@ -42,15 +42,15 @@ export class ResourcesServices {
             (resource) => resource.userId._id.toString() === userId,
         );
 
-        const notPresentSubProjects = await subSectionService.notPresent({
+        const notPresentSubsection = await subSectionService.notPresent({
             userId,
             projectId,
         });
 
-        const notMatchingSubSection = notPresentSubProjects.map(
-            (subProject) => ({
-                id: subProject._id,
-                projectName: subProject.projectName,
+        const notMatchingSubSection = notPresentSubsection.map(
+            (subsectionData) => ({
+                id: subsectionData._id,
+                projectName: subsectionData.projectName,
             }),
         );
 

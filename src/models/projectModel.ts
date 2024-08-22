@@ -13,14 +13,15 @@ const projectSchema = new mongoose.Schema<Project>(
         technology: {
             type: String,
         },
+        companyName: {
+            type: String,
+        },
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
             required: true,
         },
         companyId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Company",
             required: true,
         },
         isActive: {
@@ -31,7 +32,6 @@ const projectSchema = new mongoose.Schema<Project>(
             {
                 userId: {
                     type: mongoose.Schema.Types.ObjectId,
-                    ref: "User",
                 },
                 userRole: {
                     type: String,

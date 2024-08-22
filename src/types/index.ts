@@ -39,6 +39,7 @@ export interface Project {
     projectName: string;
     projectDesc: string;
     technology: string;
+    companyName: string;
     isActive: boolean;
     companyId: mongoose.Types.ObjectId;
     createdBy: mongoose.Types.ObjectId;
@@ -60,10 +61,11 @@ export interface RequestBody {
     _id?: string;
     projectName?: string;
     projectDesc?: string;
+    companyName?: string;
     technology?: string;
     companyId?: mongoose.Types.ObjectId;
     projectId?: mongoose.Types.ObjectId;
-    resource?: [];
+    resource?: Resources[];
     createdBy?: string;
 }
 
@@ -102,7 +104,7 @@ export interface SignupUser {
 }
 
 export interface UserCache {
-    userId: string;
+    userId: mongoose.Types.ObjectId;
     firstName: string;
     lastName: string;
     avatar: string;

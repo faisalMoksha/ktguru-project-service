@@ -2,12 +2,18 @@ import { Request, NextFunction, Response } from "express";
 import { Logger } from "winston";
 import { Request as AuthRequest } from "express-jwt";
 import createHttpError from "http-errors";
-import { ResourcesStatus, Roles } from "../../constants";
+import {
+    ChatEvents,
+    KafKaTopic,
+    ResourcesStatus,
+    Roles,
+} from "../../constants";
 import { ApiCallService } from "../../services/apiCallService";
 import { ProjectService } from "../../services/projectService";
 import { SubSectionService } from "../../services/subSectionService";
 import { ResourcesServices } from "../../services/resourcesService";
 import { VerificationToken } from "../../types";
+import { MessageBroker } from "../../types/broker";
 
 export class ResourcesController {
     constructor(
@@ -16,14 +22,13 @@ export class ResourcesController {
         private projectService: ProjectService,
         private subSectionService: SubSectionService,
         private resourcesService: ResourcesServices,
+        private broker: MessageBroker,
     ) {}
 
     add = async (req: AuthRequest, res: Response, next: NextFunction) => {
-        //TODO:1. add userId in project chat group
-        //TODO:2. add userId in sub-setion chat if needed
-        //TODO:3. check subscription
-        //TODO:4. check resource limit
-        //TODO:5. send mail
+        //TODO:1. Check subscription
+        //TODO:2. Check resource limit
+        //TODO:3. Send mail
 
         const { name, email, message, projectId, subSectionIds, role } =
             req.body;
@@ -37,14 +42,14 @@ export class ResourcesController {
             role,
         });
 
+        if (!req.auth || !req.auth.sub) {
+            return next(createHttpError(400, "Something went wrong"));
+        }
+
+        const addedBy = req.auth.sub;
+
         try {
-            if (!req.auth || !req.auth.sub) {
-                return next(createHttpError(400, "Something went wrong"));
-            }
-
-            const addedBy = req.auth.sub;
-
-            const user = await this.apiCallService.addUser({
+            const user: { userId: string } = await this.apiCallService.addUser({
                 email,
                 role,
                 projectId,
@@ -56,27 +61,54 @@ export class ResourcesController {
                 return next(error);
             }
 
-            await this.projectService.addUserInProject(
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                { userId: user.userId, projectId, role },
-            );
+            await this.projectService.addUserInProject({
+                userId: user.userId,
+                projectId,
+                role,
+            });
+
+            let getProjectIds: string[] = [];
 
             if (role == Roles.PROJECT_ADMIN) {
                 await this.subSectionService.addUserInSubSection({
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     userId: user.userId,
                     projectId: projectId,
                 });
+
+                const ids = await this.subSectionService.getSubsectionIds([
+                    projectId,
+                ]);
+
+                getProjectIds = ids;
             }
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             if (subSectionIds && subSectionIds.length > 0) {
                 await this.subSectionService.bulkAdd(
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     user.userId,
                     subSectionIds,
                 );
+
+                getProjectIds = subSectionIds;
             }
+
+            getProjectIds.push(projectId);
+
+            // send kafka message
+            const brokerMessage = {
+                event_type: ChatEvents.ADD_USER_PROJECT_CHAT,
+                data: {
+                    userId: user.userId,
+                    isApproved: false,
+                    getProjectIds: getProjectIds,
+                },
+            };
+
+            await this.broker.sendMessage(
+                KafKaTopic.Chat,
+                JSON.stringify(brokerMessage),
+                projectId,
+            );
 
             res.status(201).json({
                 message: "The recipient has been invited as per your request",
@@ -91,8 +123,7 @@ export class ResourcesController {
 
         const data = await this.projectService.getResources(projectId);
 
-        //TODO:1. populate user data and send in response
-        res.status(200).json({ resources: data?.resources });
+        res.status(200).json(data);
     };
 
     getDetails = async (req: Request, res: Response, next: NextFunction) => {
@@ -185,12 +216,30 @@ export class ResourcesController {
                     role,
                 });
 
-            if (!data) {
+            if (!data.data) {
                 const error = createHttpError(404, "Project not found");
                 return next(error);
             }
 
-            const id = data ? String(data.projectId) : "";
+            const id = data ? String(data.data.projectId) : "";
+
+            if (data.new) {
+                // send kafka message
+                const brokerMessage = {
+                    event_type: ChatEvents.ADD_USER_PROJECT_CHAT,
+                    data: {
+                        userId: userId,
+                        isApproved: true,
+                        getProjectIds: [projectId],
+                    },
+                };
+
+                await this.broker.sendMessage(
+                    KafKaTopic.Chat,
+                    JSON.stringify(brokerMessage),
+                    userId,
+                );
+            }
 
             const result = await this.resourcesService.formatResources({
                 userId,
@@ -208,11 +257,10 @@ export class ResourcesController {
     };
 
     addInCompany = async (req: Request, res: Response, next: NextFunction) => {
-        //TODO:1. add userId in project chat
-        //TODO:2. add userId in sub-setion chat if needed
-        //TODO:3. check subscription pro or basic
-        //TODO:4. check resource limit
-        //TODO:5. send mail
+        //TODO:1. check subscription pro or basic
+        //TODO:2. check resource limit
+        //TODO:3. generate and saved verification token
+        //TODO:4. Implement send mail functionality
 
         const { name, email, companyId, message } = req.body;
 
@@ -226,7 +274,7 @@ export class ResourcesController {
         const role = Roles.COMPANY_ADMIN;
 
         try {
-            const user = await this.apiCallService.addUser({
+            const user: { userId: string } = await this.apiCallService.addUser({
                 email,
                 role,
                 companyId,
@@ -237,13 +285,31 @@ export class ResourcesController {
                 return next(error);
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             const userId = user.userId;
-            await this.projectService.AddCompanyManager(userId, companyId);
+            const data: { isApproved?: boolean; combinedIds?: string[] } =
+                await this.projectService.AddCompanyManager(userId, companyId);
+
+            if (data.combinedIds) {
+                // send kafka message
+                const brokerMessage = {
+                    event_type: ChatEvents.ADD_USER_PROJECT_CHAT,
+                    data: {
+                        userId: user.userId,
+                        isApproved: false,
+                        getProjectIds: data.combinedIds,
+                    },
+                };
+
+                await this.broker.sendMessage(
+                    KafKaTopic.Chat,
+                    JSON.stringify(brokerMessage),
+                    userId,
+                );
+            }
 
             res.status(201).json({
                 message: "The recipient has been invited as per your request",
-                // user: userObj, //TODO:6. check this
+                // user: userObj, //TODO:5. check this
             });
         } catch (error) {
             return next(error);
@@ -279,6 +345,32 @@ export class ResourcesController {
                 isRejectedByUser,
             );
 
+            let getProjectIds: string[] = [];
+
+            const projectIds =
+                await this.projectService.getProjectsIds(companyId);
+
+            const ids =
+                await this.subSectionService.getSubsectionIds(projectIds);
+
+            getProjectIds = [...projectIds, ...ids];
+
+            // send kafka message
+            const brokerMessage = {
+                event_type: ChatEvents.IS_APPROVED,
+                data: {
+                    userId: userId,
+                    isApproved: false,
+                    getProjectIds: getProjectIds,
+                },
+            };
+
+            await this.broker.sendMessage(
+                KafKaTopic.Chat,
+                JSON.stringify(brokerMessage),
+                userId,
+            );
+
             res.status(200).json({
                 message: "The user remove from company",
                 // userObj, //TODO:1. check this
@@ -290,6 +382,8 @@ export class ResourcesController {
     };
 
     signupUser = async (req: Request, res: Response, next: NextFunction) => {
+        //TODO:1. check the resource limit
+
         const { firstName, lastName, password } = req.body;
 
         const token = req.params.token;
@@ -306,8 +400,6 @@ export class ResourcesController {
                 return next(error);
             }
 
-            //TODO:1. check the resource limit
-
             const user = await this.apiCallService.signupUser({
                 firstName,
                 lastName,
@@ -321,11 +413,21 @@ export class ResourcesController {
                 return next(error);
             }
 
+            let getProjectIds: string[] = [];
+
             if (tokenData.projectId) {
                 await this.projectService.verifyResource({
                     projectId: tokenData.projectId,
                     userId: tokenData.userId,
                 });
+
+                const ids = await this.subSectionService.getSubsectionIds([
+                    tokenData.projectId,
+                ]);
+
+                getProjectIds = ids;
+
+                getProjectIds.push(tokenData.projectId);
             }
 
             if (tokenData.companyId) {
@@ -333,7 +435,32 @@ export class ResourcesController {
                     tokenData.userId,
                     tokenData.companyId,
                 );
+
+                const projectIds = await this.projectService.getProjectsIds(
+                    tokenData.companyId,
+                );
+
+                const ids =
+                    await this.subSectionService.getSubsectionIds(projectIds);
+
+                getProjectIds = [...projectIds, ...ids];
             }
+
+            // send kafka message
+            const brokerMessage = {
+                event_type: ChatEvents.IS_APPROVED,
+                data: {
+                    userId: tokenData.userId,
+                    isApproved: true,
+                    getProjectIds: getProjectIds,
+                },
+            };
+
+            await this.broker.sendMessage(
+                KafKaTopic.Chat,
+                JSON.stringify(brokerMessage),
+                tokenData.userId,
+            );
 
             await this.apiCallService.deleteToken(tokenData._id);
 
@@ -350,6 +477,11 @@ export class ResourcesController {
         res: Response,
         next: NextFunction,
     ) => {
+        //TODO:1. check subscription
+        //TODO:2. check resource length
+        //TODO:3. send token for redirect on home page
+        //TODO:4. isApproved true for company
+
         const token = req.params.token;
 
         try {
@@ -364,16 +496,36 @@ export class ResourcesController {
                 return next(error);
             }
 
-            //TODO:1. check subscription
-            //TODO:2. check resource length
-
             await this.projectService.verifyResource({
                 projectId: tokenData.projectId,
                 userId: tokenData.userId,
             });
 
-            //TODO:3. send token for redirect on home page
-            //TODO:4. isApproved true for company
+            let getProjectIds: string[] = [];
+
+            const ids = await this.subSectionService.getSubsectionIds([
+                tokenData.projectId,
+            ]);
+
+            getProjectIds = ids;
+
+            getProjectIds.push(tokenData.projectId);
+
+            // send kafka message
+            const brokerMessage = {
+                event_type: ChatEvents.IS_APPROVED,
+                data: {
+                    userId: tokenData.userId,
+                    isApproved: true,
+                    getProjectIds: getProjectIds,
+                },
+            };
+
+            await this.broker.sendMessage(
+                KafKaTopic.Chat,
+                JSON.stringify(brokerMessage),
+                tokenData.userId,
+            );
 
             await this.apiCallService.deleteToken(tokenData._id);
 
@@ -384,6 +536,8 @@ export class ResourcesController {
     };
 
     declineInvite = async (req: Request, res: Response, next: NextFunction) => {
+        //TODO:1. Implement send mail functionality
+
         const token = req.params.token;
 
         try {
@@ -428,8 +582,6 @@ export class ResourcesController {
                     isRejectedByUser,
                 );
             }
-
-            //TODO:1. add mail send function
 
             await this.apiCallService.deleteToken(tokenData._id);
 

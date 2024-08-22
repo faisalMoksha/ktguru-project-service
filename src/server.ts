@@ -14,17 +14,19 @@ const startServer = async () => {
         await connectDB();
 
         broker = createMessageBroker();
-        await broker.connectConsumer();
 
+        await broker.connectProducer();
+
+        await broker.connectConsumer();
         await broker.consumeMessage([KafKaTopic.User], false);
 
         app.listen(PORT, () => logger.info(`Server listening on ${PORT}`));
     } catch (error: unknown) {
         if (error instanceof Error) {
             if (broker) {
+                await broker.disconnectProducer();
                 await broker.disconnectConsumer();
             }
-
             logger.error(error.message);
             process.exit(1);
         }

@@ -15,7 +15,6 @@ const subSectionSchema = new mongoose.Schema<SubSection>(
         },
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
             required: true,
         },
         projectId: {
@@ -31,7 +30,6 @@ const subSectionSchema = new mongoose.Schema<SubSection>(
             {
                 userId: {
                     type: mongoose.Schema.Types.ObjectId,
-                    ref: "User",
                 },
                 userRole: {
                     type: String,

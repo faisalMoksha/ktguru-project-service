@@ -16,4 +16,12 @@ export const ResourcesStatus = {
 
 export const KafKaTopic = {
     User: "user",
+    Chat: "chat",
 } as const;
+
+export enum ChatEvents {
+    CHAT_CREATE = "CHAT_CREATE",
+    CHAT_UPDATE = "CHAT_UPDATE",
+    ADD_USER_PROJECT_CHAT = "ADD_USER_PROJECT_CHAT",
+    IS_APPROVED = "IS_APPROVED", // Boolean value
+}

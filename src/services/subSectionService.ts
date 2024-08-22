@@ -12,9 +12,6 @@ export class SubSectionService {
         projectId,
         createdBy,
     }: RequestBody) {
-        //TODO:1. populate some data and send response
-        //TODO:2. create subsection chat
-
         const findProject = await subSectionModel.find({
             $and: [
                 { projectId: projectId },
@@ -31,7 +28,7 @@ export class SubSectionService {
         }
 
         const projectData = await projectModel.findById(projectId);
-        // .populate("companyId", "teams"); //TODO:3. uncomment (populate company data)
+        // .populate("companyId", "teams"); //TODO:1. uncomment (populate company data)
 
         if (!projectData) {
             const error = createHttpError(500, `Project data not found`);
@@ -58,7 +55,7 @@ export class SubSectionService {
             }),
         );
 
-        return await subSectionModel.create({
+        let newSubsection = await subSectionModel.create({
             projectName,
             projectDesc,
             technology,
@@ -67,6 +64,15 @@ export class SubSectionService {
             isActive: true,
             resources: resourcesArray,
         });
+
+        newSubsection = await newSubsection.populate({
+            path: "resources.userId",
+            model: "UserCache",
+            select: "firstName lastName avatar",
+            foreignField: "userId",
+        });
+
+        return newSubsection;
     }
 
     async update({
@@ -76,7 +82,6 @@ export class SubSectionService {
         technology,
         projectId,
     }: RequestBody) {
-        // TODO:1. also change chat group name
         try {
             const findProject = await subSectionModel.find({
                 $and: [
@@ -107,17 +112,23 @@ export class SubSectionService {
     }
 
     async getAll(userId: string, projectId: string) {
-        return await subSectionModel.find({
-            projectId: projectId,
-            $and: [
-                {
-                    resources: {
-                        $elemMatch: { userId: userId, isApproved: true },
+        return await subSectionModel
+            .find({
+                projectId: projectId,
+                $and: [
+                    {
+                        resources: {
+                            $elemMatch: { userId: userId, isApproved: true },
+                        },
                     },
-                },
-            ],
-        });
-        // .populate("resources.userId", "lastName firstName avatar email"); //TODO:1. uncomment this line
+                ],
+            })
+            .populate({
+                path: "resources.userId",
+                model: "UserCache",
+                select: "firstName lastName avatar",
+                foreignField: "userId",
+            });
     }
 
     async findById(id: string) {
@@ -235,32 +246,54 @@ export class SubSectionService {
         projectId,
         role,
     }: AddUserInProject) {
-        //TODO:1. add data in chat
-        //TODO:2. populate project data if needed
-        const data = await subSectionModel.findOneAndUpdate(
-            {
-                _id: projectId,
-                resources: { $elemMatch: { userId: userId } },
-            },
-            { $set: { "resources.$.isApproved": true } },
-        );
+        const data = await subSectionModel
+            .findOneAndUpdate(
+                {
+                    _id: projectId,
+                    resources: { $elemMatch: { userId: userId } },
+                },
+                { $set: { "resources.$.isApproved": true } },
+            )
+            .populate({
+                path: "resources.userId",
+                model: "UserCache",
+                select: "firstName lastName avatar",
+                foreignField: "userId",
+            });
 
         if (!data) {
-            return await subSectionModel.findByIdAndUpdate(
-                { _id: projectId },
-                {
-                    $push: {
-                        resources: {
-                            userRole: role,
-                            userId: userId,
-                            isApproved: true,
+            const data = await subSectionModel
+                .findByIdAndUpdate(
+                    { _id: projectId },
+                    {
+                        $push: {
+                            resources: {
+                                userRole: role,
+                                userId: userId,
+                                isApproved: true,
+                            },
                         },
                     },
-                },
-                { new: true },
-            );
+                    { new: true },
+                )
+                .populate({
+                    path: "resources.userId",
+                    model: "UserCache",
+                    select: "firstName lastName avatar",
+                    foreignField: "userId",
+                });
+
+            return { data: data, new: true };
         }
 
-        return data;
+        return { data: data, new: false };
+    }
+
+    async getSubsectionIds(projectIds: string[]) {
+        const subSectionIds = await subSectionModel.distinct("_id", {
+            projectId: { $in: projectIds },
+        });
+
+        return subSectionIds;
     }
 }

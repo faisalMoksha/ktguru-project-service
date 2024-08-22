@@ -9,15 +9,19 @@ import projectValidator from "../validators/project-validator";
 import updateProjectValidator from "../validators/update-project-validator";
 import { ProjectService } from "../services/projectService";
 import { ApiCallService } from "../services/apiCallService";
+import { createMessageBroker } from "../utils/factories/brokerFactory";
 
 const router = express.Router();
 
 const projectService = new ProjectService();
 const apiCallService = new ApiCallService();
+const broker = createMessageBroker();
+
 const projectController = new ProjectController(
     logger,
     projectService,
     apiCallService,
+    broker,
 );
 
 /**

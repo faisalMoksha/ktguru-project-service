@@ -8,13 +8,17 @@ import { SubSectionController } from "../controllers/project/subSectionControlle
 import projectValidator from "../validators/project-validator";
 import updateProjectValidator from "../validators/update-project-validator";
 import { SubSectionService } from "../services/subSectionService";
+import { createMessageBroker } from "../utils/factories/brokerFactory";
 
 const router = express.Router();
 
 const subSectionService = new SubSectionService();
+const broker = createMessageBroker();
+
 const subSectionController = new SubSectionController(
     logger,
     subSectionService,
+    broker,
 );
 
 /**

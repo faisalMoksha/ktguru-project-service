@@ -9,6 +9,7 @@ import { ApiCallService } from "../services/apiCallService";
 import { ProjectService } from "../services/projectService";
 import { SubSectionService } from "../services/subSectionService";
 import { ResourcesServices } from "../services/resourcesService";
+import { createMessageBroker } from "../utils/factories/brokerFactory";
 
 const router = express.Router();
 
@@ -16,6 +17,7 @@ const apiCallService = new ApiCallService();
 const projectService = new ProjectService();
 const subSectionService = new SubSectionService();
 const resourcesService = new ResourcesServices();
+const broker = createMessageBroker();
 
 const resourcesController = new ResourcesController(
     logger,
@@ -23,6 +25,7 @@ const resourcesController = new ResourcesController(
     projectService,
     subSectionService,
     resourcesService,
+    broker,
 );
 
 /**
