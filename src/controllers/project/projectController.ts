@@ -8,6 +8,7 @@ import { ApiCallService } from "../../services/apiCallService";
 import { Resources } from "../../types";
 import { MessageBroker } from "../../types/broker";
 import { ChatEvents, KafKaTopic } from "../../constants";
+import { Config } from "../../config";
 
 export class ProjectController {
     constructor(
@@ -59,21 +60,23 @@ export class ProjectController {
                 createdBy,
             });
 
-            // send kafka message
-            const brokerMessage = {
-                event_type: ChatEvents.CHAT_CREATE,
-                data: {
-                    chatName: project.projectName,
-                    projectId: project._id,
-                    users: project.resources,
-                },
-            };
+            if (Config.NODE_ENV != "test") {
+                // send kafka message
+                const brokerMessage = {
+                    event_type: ChatEvents.CHAT_CREATE,
+                    data: {
+                        chatName: project.projectName,
+                        projectId: project._id,
+                        users: project.resources,
+                    },
+                };
 
-            await this.broker.sendMessage(
-                KafKaTopic.Chat,
-                JSON.stringify(brokerMessage),
-                project._id.toString(),
-            );
+                await this.broker.sendMessage(
+                    KafKaTopic.Chat,
+                    JSON.stringify(brokerMessage),
+                    project._id.toString(),
+                );
+            }
 
             res.status(201).json({
                 data: project,
@@ -97,20 +100,22 @@ export class ProjectController {
                 technology,
             });
 
-            // send kafka message
-            const brokerMessage = {
-                event_type: ChatEvents.CHAT_UPDATE,
-                data: {
-                    chatName: projectName,
-                    projectId: _id,
-                },
-            };
+            if (Config.NODE_ENV != "test") {
+                // send kafka message
+                const brokerMessage = {
+                    event_type: ChatEvents.CHAT_UPDATE,
+                    data: {
+                        chatName: projectName,
+                        projectId: _id,
+                    },
+                };
 
-            await this.broker.sendMessage(
-                KafKaTopic.Chat,
-                JSON.stringify(brokerMessage),
-                _id.toString(),
-            );
+                await this.broker.sendMessage(
+                    KafKaTopic.Chat,
+                    JSON.stringify(brokerMessage),
+                    _id.toString(),
+                );
+            }
 
             res.status(200).json({
                 data,

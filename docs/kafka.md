@@ -3,6 +3,7 @@
 | Topic | Data                                                | Events                   |
 | ----- | --------------------------------------------------- | ------------------------ |
 | chat  | `{ "event_type": "CHAT_CREATE", "data": "data..."}` | CHAT_CREATE, CHAT_UPDATE |
+| mail  | `{ "event_type": "", "data": "data..."}`            | ,                        |
 
 ### Create Kafka topic:
 

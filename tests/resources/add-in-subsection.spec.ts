@@ -7,6 +7,7 @@ import { ResourcesStatus, Roles } from "../../src/constants";
 import projectModel from "../../src/models/projectModel";
 import { Project } from "../../src/types";
 import subSectionModel from "../../src/models/subSectionModel";
+import userCacheModel from "../../src/models/userCacheModel";
 
 describe("POST /resources/add-in-subsection", () => {
     let jwks: ReturnType<typeof createJWKSMock>;
@@ -63,6 +64,14 @@ describe("POST /resources/add-in-subsection", () => {
                         status: ResourcesStatus.ACTIVE,
                     },
                 ],
+            });
+
+            await userCacheModel.create({
+                userId: "6512a4c42a6759c77211662e",
+            });
+
+            await userCacheModel.create({
+                userId: "6512a4c42a6759c772115342",
             });
 
             // Arrange

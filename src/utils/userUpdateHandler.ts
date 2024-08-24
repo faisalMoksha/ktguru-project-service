@@ -14,6 +14,7 @@ export const handleUserUpdate = async (value: string) => {
                     firstName: user.data.firstName,
                     lastName: user.data.lastName,
                     avatar: user.data.avatar,
+                    email: user.data.email,
                 },
             },
             {

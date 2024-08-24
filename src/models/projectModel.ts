@@ -61,4 +61,7 @@ const projectSchema = new mongoose.Schema<Project>(
     { timestamps: true },
 );
 
+// Created a compound index on resources.userId and resources.isApproved
+projectSchema.index({ "resources.userId": 1, "resources.isApproved": 1 });
+
 export default mongoose.model<Project>("Project", projectSchema);

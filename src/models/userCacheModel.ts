@@ -16,6 +16,9 @@ const userSchema = new mongoose.Schema<UserCache>(
         avatar: {
             type: String,
         },
+        email: {
+            type: String,
+        },
     },
     { timestamps: true },
 );

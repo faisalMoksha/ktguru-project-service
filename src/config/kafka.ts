@@ -1,4 +1,10 @@
-import { Consumer, EachMessagePayload, Kafka, Producer } from "kafkajs";
+import {
+    Consumer,
+    EachMessagePayload,
+    Kafka,
+    Partitioners,
+    Producer,
+} from "kafkajs";
 import { MessageBroker } from "../types/broker";
 import logger from "./logger";
 import { KafKaTopic } from "../constants";
@@ -13,7 +19,10 @@ export class KafkaBroker implements MessageBroker {
 
         this.consumer = kafka.consumer({ groupId: clientId });
 
-        this.producer = kafka.producer();
+        // this.producer = kafka.producer();
+        this.producer = kafka.producer({
+            createPartitioner: Partitioners.LegacyPartitioner,
+        });
     }
 
     /**

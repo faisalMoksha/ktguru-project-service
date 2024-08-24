@@ -58,4 +58,11 @@ const subSectionSchema = new mongoose.Schema<SubSection>(
     { timestamps: true },
 );
 
+// Created a compound index on projectId, resources.userId, and resources.isApproved
+subSectionSchema.index({
+    projectId: 1,
+    "resources.userId": 1,
+    "resources.isApproved": 1,
+});
+
 export default mongoose.model<SubSection>("SubSection", subSectionSchema);

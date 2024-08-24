@@ -108,6 +108,7 @@ export interface UserCache {
     firstName: string;
     lastName: string;
     avatar: string;
+    email: string;
 }
 
 export interface MessagePayload {

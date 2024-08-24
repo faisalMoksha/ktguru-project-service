@@ -14,6 +14,7 @@ import { SubSectionService } from "../../services/subSectionService";
 import { ResourcesServices } from "../../services/resourcesService";
 import { VerificationToken } from "../../types";
 import { MessageBroker } from "../../types/broker";
+import { Config } from "../../config";
 
 export class ResourcesController {
     constructor(
@@ -28,7 +29,7 @@ export class ResourcesController {
     add = async (req: AuthRequest, res: Response, next: NextFunction) => {
         //TODO:1. Check subscription
         //TODO:2. Check resource limit
-        //TODO:3. Send mail
+        //TODO:3. Implement send mail functionality
 
         const { name, email, message, projectId, subSectionIds, role } =
             req.body;
@@ -94,21 +95,23 @@ export class ResourcesController {
 
             getProjectIds.push(projectId);
 
-            // send kafka message
-            const brokerMessage = {
-                event_type: ChatEvents.ADD_USER_PROJECT_CHAT,
-                data: {
-                    userId: user.userId,
-                    isApproved: false,
-                    getProjectIds: getProjectIds,
-                },
-            };
+            if (Config.NODE_ENV != "test") {
+                // send kafka message
+                const brokerMessage = {
+                    event_type: ChatEvents.ADD_USER_PROJECT_CHAT,
+                    data: {
+                        userId: user.userId,
+                        isApproved: false,
+                        getProjectIds: getProjectIds,
+                    },
+                };
 
-            await this.broker.sendMessage(
-                KafKaTopic.Chat,
-                JSON.stringify(brokerMessage),
-                projectId,
-            );
+                await this.broker.sendMessage(
+                    KafKaTopic.Chat,
+                    JSON.stringify(brokerMessage),
+                    projectId,
+                );
+            }
 
             res.status(201).json({
                 message: "The recipient has been invited as per your request",
@@ -224,21 +227,23 @@ export class ResourcesController {
             const id = data ? String(data.data.projectId) : "";
 
             if (data.new) {
-                // send kafka message
-                const brokerMessage = {
-                    event_type: ChatEvents.ADD_USER_PROJECT_CHAT,
-                    data: {
-                        userId: userId,
-                        isApproved: true,
-                        getProjectIds: [projectId],
-                    },
-                };
+                if (Config.NODE_ENV != "test") {
+                    // send kafka message
+                    const brokerMessage = {
+                        event_type: ChatEvents.ADD_USER_PROJECT_CHAT,
+                        data: {
+                            userId: userId,
+                            isApproved: true,
+                            getProjectIds: [projectId],
+                        },
+                    };
 
-                await this.broker.sendMessage(
-                    KafKaTopic.Chat,
-                    JSON.stringify(brokerMessage),
-                    userId,
-                );
+                    await this.broker.sendMessage(
+                        KafKaTopic.Chat,
+                        JSON.stringify(brokerMessage),
+                        userId,
+                    );
+                }
             }
 
             const result = await this.resourcesService.formatResources({
@@ -290,21 +295,23 @@ export class ResourcesController {
                 await this.projectService.AddCompanyManager(userId, companyId);
 
             if (data.combinedIds) {
-                // send kafka message
-                const brokerMessage = {
-                    event_type: ChatEvents.ADD_USER_PROJECT_CHAT,
-                    data: {
-                        userId: user.userId,
-                        isApproved: false,
-                        getProjectIds: data.combinedIds,
-                    },
-                };
+                if (Config.NODE_ENV != "test") {
+                    // send kafka message
+                    const brokerMessage = {
+                        event_type: ChatEvents.ADD_USER_PROJECT_CHAT,
+                        data: {
+                            userId: user.userId,
+                            isApproved: false,
+                            getProjectIds: data.combinedIds,
+                        },
+                    };
 
-                await this.broker.sendMessage(
-                    KafKaTopic.Chat,
-                    JSON.stringify(brokerMessage),
-                    userId,
-                );
+                    await this.broker.sendMessage(
+                        KafKaTopic.Chat,
+                        JSON.stringify(brokerMessage),
+                        userId,
+                    );
+                }
             }
 
             res.status(201).json({
@@ -355,21 +362,23 @@ export class ResourcesController {
 
             getProjectIds = [...projectIds, ...ids];
 
-            // send kafka message
-            const brokerMessage = {
-                event_type: ChatEvents.IS_APPROVED,
-                data: {
-                    userId: userId,
-                    isApproved: false,
-                    getProjectIds: getProjectIds,
-                },
-            };
+            if (Config.NODE_ENV != "test") {
+                // send kafka message
+                const brokerMessage = {
+                    event_type: ChatEvents.IS_APPROVED,
+                    data: {
+                        userId: userId,
+                        isApproved: false,
+                        getProjectIds: getProjectIds,
+                    },
+                };
 
-            await this.broker.sendMessage(
-                KafKaTopic.Chat,
-                JSON.stringify(brokerMessage),
-                userId,
-            );
+                await this.broker.sendMessage(
+                    KafKaTopic.Chat,
+                    JSON.stringify(brokerMessage),
+                    userId,
+                );
+            }
 
             res.status(200).json({
                 message: "The user remove from company",
@@ -446,21 +455,23 @@ export class ResourcesController {
                 getProjectIds = [...projectIds, ...ids];
             }
 
-            // send kafka message
-            const brokerMessage = {
-                event_type: ChatEvents.IS_APPROVED,
-                data: {
-                    userId: tokenData.userId,
-                    isApproved: true,
-                    getProjectIds: getProjectIds,
-                },
-            };
+            if (Config.NODE_ENV != "test") {
+                // send kafka message
+                const brokerMessage = {
+                    event_type: ChatEvents.IS_APPROVED,
+                    data: {
+                        userId: tokenData.userId,
+                        isApproved: true,
+                        getProjectIds: getProjectIds,
+                    },
+                };
 
-            await this.broker.sendMessage(
-                KafKaTopic.Chat,
-                JSON.stringify(brokerMessage),
-                tokenData.userId,
-            );
+                await this.broker.sendMessage(
+                    KafKaTopic.Chat,
+                    JSON.stringify(brokerMessage),
+                    tokenData.userId,
+                );
+            }
 
             await this.apiCallService.deleteToken(tokenData._id);
 
@@ -511,21 +522,23 @@ export class ResourcesController {
 
             getProjectIds.push(tokenData.projectId);
 
-            // send kafka message
-            const brokerMessage = {
-                event_type: ChatEvents.IS_APPROVED,
-                data: {
-                    userId: tokenData.userId,
-                    isApproved: true,
-                    getProjectIds: getProjectIds,
-                },
-            };
+            if (Config.NODE_ENV != "test") {
+                // send kafka message
+                const brokerMessage = {
+                    event_type: ChatEvents.IS_APPROVED,
+                    data: {
+                        userId: tokenData.userId,
+                        isApproved: true,
+                        getProjectIds: getProjectIds,
+                    },
+                };
 
-            await this.broker.sendMessage(
-                KafKaTopic.Chat,
-                JSON.stringify(brokerMessage),
-                tokenData.userId,
-            );
+                await this.broker.sendMessage(
+                    KafKaTopic.Chat,
+                    JSON.stringify(brokerMessage),
+                    tokenData.userId,
+                );
+            }
 
             await this.apiCallService.deleteToken(tokenData._id);
 
