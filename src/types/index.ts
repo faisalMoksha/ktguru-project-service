@@ -115,3 +115,10 @@ export interface MessagePayload {
     event_type: string;
     data: UserCache;
 }
+
+export interface ValueFromApiCall {
+    userId: string;
+    url: string;
+    declineURL: string;
+    companyName: string;
+}

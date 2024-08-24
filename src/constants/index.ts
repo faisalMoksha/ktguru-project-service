@@ -17,6 +17,7 @@ export const ResourcesStatus = {
 export const KafKaTopic = {
     User: "user",
     Chat: "chat",
+    Mail: "mail",
 } as const;
 
 export enum ChatEvents {

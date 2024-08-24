@@ -2,6 +2,7 @@ import createHttpError from "http-errors";
 import { ProjectService } from "./projectService";
 import { SubSectionService } from "./subSectionService";
 import { AddUserInProject, ProjectResource } from "../types";
+import userCacheModel from "../models/userCacheModel";
 
 const projectService = new ProjectService();
 const subSectionService = new SubSectionService();
@@ -69,5 +70,9 @@ export class ResourcesServices {
         }
 
         return null;
+    }
+
+    async getUserInfo(userId: string) {
+        return await userCacheModel.findOne({ userId: userId });
     }
 }

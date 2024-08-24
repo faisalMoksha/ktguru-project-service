@@ -178,15 +178,15 @@ export class ProjectService {
             throw error;
         }
 
-        const checkMemberIsApproved = await projectModel.findOne({
+        const isUserAdded = await projectModel.findOne({
             companyId: companyId,
             resources: {
                 $elemMatch: { userId: userId, isApproved: false },
             },
         });
 
-        if (checkMemberIsApproved) {
-            return { isApproved: true };
+        if (isUserAdded) {
+            return { isAdded: true };
         }
 
         // Update projects

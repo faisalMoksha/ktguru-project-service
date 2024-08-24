@@ -12,7 +12,7 @@ import { ApiCallService } from "../../services/apiCallService";
 import { ProjectService } from "../../services/projectService";
 import { SubSectionService } from "../../services/subSectionService";
 import { ResourcesServices } from "../../services/resourcesService";
-import { VerificationToken } from "../../types";
+import { ValueFromApiCall, VerificationToken } from "../../types";
 import { MessageBroker } from "../../types/broker";
 import { Config } from "../../config";
 
@@ -29,7 +29,6 @@ export class ResourcesController {
     add = async (req: AuthRequest, res: Response, next: NextFunction) => {
         //TODO:1. Check subscription
         //TODO:2. Check resource limit
-        //TODO:3. Implement send mail functionality
 
         const { name, email, message, projectId, subSectionIds, role } =
             req.body;
@@ -50,11 +49,14 @@ export class ResourcesController {
         const addedBy = req.auth.sub;
 
         try {
-            const user: { userId: string } = await this.apiCallService.addUser({
+            const getProject = await this.projectService.findById(projectId);
+
+            const user: ValueFromApiCall = await this.apiCallService.addUser({
                 email,
                 role,
                 projectId,
                 addedBy,
+                companyId: String(getProject?.companyId),
             });
 
             if (!user) {
@@ -62,7 +64,7 @@ export class ResourcesController {
                 return next(error);
             }
 
-            await this.projectService.addUserInProject({
+            const projectData = await this.projectService.addUserInProject({
                 userId: user.userId,
                 projectId,
                 role,
@@ -96,7 +98,7 @@ export class ResourcesController {
             getProjectIds.push(projectId);
 
             if (Config.NODE_ENV != "test") {
-                // send kafka message
+                // send kafka message for add in chat
                 const brokerMessage = {
                     event_type: ChatEvents.ADD_USER_PROJECT_CHAT,
                     data: {
@@ -110,6 +112,39 @@ export class ResourcesController {
                     KafKaTopic.Chat,
                     JSON.stringify(brokerMessage),
                     projectId,
+                );
+            }
+
+            if (Config.NODE_ENV != "test") {
+                const getUserData =
+                    await this.resourcesService.getUserInfo(addedBy);
+
+                // send kafka message to mail service
+                const brokerMessage = {
+                    event_type: "",
+                    data: {
+                        to: email,
+                        subject: "KT-Guru Consultant Invitation",
+                        context: {
+                            name:
+                                getUserData?.firstName +
+                                " " +
+                                getUserData?.lastName,
+                            url: user.url,
+                            declineURL: user.declineURL,
+                            projectName: projectData?.projectName,
+                            role: role,
+                            message: message,
+                            companyName: user.companyName,
+                        },
+                        template: "consultant-invitation", // name of the template file i.e verify-email.hbs
+                    },
+                };
+
+                await this.broker.sendMessage(
+                    KafKaTopic.Mail,
+                    JSON.stringify(brokerMessage),
+                    user.userId.toString(),
                 );
             }
 
@@ -261,13 +296,21 @@ export class ResourcesController {
         }
     };
 
-    addInCompany = async (req: Request, res: Response, next: NextFunction) => {
+    addInCompany = async (
+        req: AuthRequest,
+        res: Response,
+        next: NextFunction,
+    ) => {
         //TODO:1. check subscription pro or basic
         //TODO:2. check resource limit
-        //TODO:3. generate and saved verification token
-        //TODO:4. Implement send mail functionality
 
         const { name, email, companyId, message } = req.body;
+
+        if (!req.auth || !req.auth.sub) {
+            return next(createHttpError(400, "Something went wrong"));
+        }
+
+        const addedBy = req.auth.sub;
 
         this.logger.debug("New request to add resources", {
             name,
@@ -279,7 +322,7 @@ export class ResourcesController {
         const role = Roles.COMPANY_ADMIN;
 
         try {
-            const user: { userId: string } = await this.apiCallService.addUser({
+            const user: ValueFromApiCall = await this.apiCallService.addUser({
                 email,
                 role,
                 companyId,
@@ -291,7 +334,7 @@ export class ResourcesController {
             }
 
             const userId = user.userId;
-            const data: { isApproved?: boolean; combinedIds?: string[] } =
+            const data: { isAdded?: boolean; combinedIds?: string[] } =
                 await this.projectService.AddCompanyManager(userId, companyId);
 
             if (data.combinedIds) {
@@ -312,6 +355,38 @@ export class ResourcesController {
                         userId,
                     );
                 }
+            }
+
+            if (Config.NODE_ENV != "test") {
+                const getUserData =
+                    await this.resourcesService.getUserInfo(addedBy);
+
+                // send kafka message to mail service
+                const brokerMessage = {
+                    event_type: "",
+                    data: {
+                        to: email,
+                        subject: "KT-Guru Invitation for company manager",
+                        context: {
+                            name:
+                                getUserData?.firstName +
+                                " " +
+                                getUserData?.lastName,
+                            url: user.url,
+                            declineURL: user.declineURL,
+                            role: role,
+                            message: message,
+                            companyName: user.companyName,
+                        },
+                        template: "company-invitation", // name of the template file i.e verify-email.hbs
+                    },
+                };
+
+                await this.broker.sendMessage(
+                    KafKaTopic.Mail,
+                    JSON.stringify(brokerMessage),
+                    user.userId.toString(),
+                );
             }
 
             res.status(201).json({
