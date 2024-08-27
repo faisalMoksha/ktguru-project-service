@@ -93,6 +93,7 @@ export interface VerificationToken {
     companyId: string;
     createdAt: Date;
     _id: string;
+    role: string;
 }
 
 export interface SignupUser {

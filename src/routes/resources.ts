@@ -113,4 +113,9 @@ router.get("/verify/:token", asyncWrapper(resourcesController.verifyResource));
  */
 router.get("/decline/:token", asyncWrapper(resourcesController.declineInvite));
 
+/**
+ * get resource users endpoint (accessible for disscussion-threads endpoint only from disscussion-service)
+ */
+router.post("/users", asyncWrapper(resourcesController.getResourceData));
+
 export default router;

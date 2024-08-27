@@ -624,8 +624,6 @@ export class ResourcesController {
     };
 
     declineInvite = async (req: Request, res: Response, next: NextFunction) => {
-        //TODO:1. Implement send mail functionality
-
         const token = req.params.token;
 
         try {
@@ -640,27 +638,35 @@ export class ResourcesController {
                 return next(error);
             }
 
+            let entityName: string = "";
             if (tokenData.projectId) {
-                await this.projectService.removedUser({
+                const projectData = await this.projectService.removedUser({
                     userId: tokenData.userId,
                     projectId: tokenData.projectId,
                     status: ResourcesStatus.REJECTED_BY_USER,
                 });
+
+                entityName = projectData?.projectName
+                    ? projectData.projectName
+                    : "";
             }
 
-            if (tokenData.companyId) {
+            if (tokenData.role == Roles.COMPANY_ADMIN) {
                 const status = ResourcesStatus.REJECTED_BY_USER;
 
-                const user = await this.apiCallService.removedFromCompany(
-                    tokenData.companyId,
-                    tokenData.userId,
-                    status,
-                );
+                const user: { companyName: string } =
+                    await this.apiCallService.removedFromCompany(
+                        tokenData.companyId,
+                        tokenData.userId,
+                        status,
+                    );
 
                 if (!user) {
                     const error = createHttpError(400, "User not found");
                     return next(error);
                 }
+
+                entityName = user.companyName;
 
                 const isRejectedByUser = true;
                 await this.projectService.removedUserFromCompany(
@@ -668,6 +674,40 @@ export class ResourcesController {
                     tokenData.companyId,
                     status,
                     isRejectedByUser,
+                );
+            }
+
+            if (Config.NODE_ENV != "test") {
+                const addedByUser = await this.resourcesService.getUserInfo(
+                    String(tokenData.addedBy),
+                );
+
+                const getUser = await this.resourcesService.getUserInfo(
+                    String(tokenData.userId),
+                );
+
+                // send kafka message to mail service
+                const brokerMessage = {
+                    event_type: "",
+                    data: {
+                        to: addedByUser?.email,
+                        subject: "Invitation Declined",
+                        context: {
+                            name:
+                                addedByUser?.firstName +
+                                " " +
+                                addedByUser?.lastName,
+                            invitedUser: getUser?.email,
+                            entityName: entityName,
+                        },
+                        template: "decline-invitation", // name of the template file i.e verify-email.hbs
+                    },
+                };
+
+                await this.broker.sendMessage(
+                    KafKaTopic.Mail,
+                    JSON.stringify(brokerMessage),
+                    tokenData.addedBy.toString(),
                 );
             }
 
@@ -679,6 +719,21 @@ export class ResourcesController {
             });
         } catch (error) {
             return next(error);
+        }
+    };
+
+    getResourceData = async (req: Request, res: Response) => {
+        const { projectId, model_type } = req.body;
+
+        try {
+            const data = await this.resourcesService.getResource(
+                projectId,
+                model_type,
+            );
+
+            return res.status(200).json(data);
+        } catch (error) {
+            res.status(404).json(error);
         }
     };
 }

@@ -3,6 +3,9 @@ import { ProjectService } from "./projectService";
 import { SubSectionService } from "./subSectionService";
 import { AddUserInProject, ProjectResource } from "../types";
 import userCacheModel from "../models/userCacheModel";
+import projectModel from "../models/projectModel";
+import logger from "../config/logger";
+import subSectionModel from "../models/subSectionModel";
 
 const projectService = new ProjectService();
 const subSectionService = new SubSectionService();
@@ -74,5 +77,30 @@ export class ResourcesServices {
 
     async getUserInfo(userId: string) {
         return await userCacheModel.findOne({ userId: userId });
+    }
+
+    async getResource(projectId: string, model_type: string) {
+        switch (model_type) {
+            case "Project": {
+                const project = await projectModel.findById(projectId);
+
+                return {
+                    data: project?.resources,
+                    projectName: project?.projectName,
+                };
+            }
+
+            case "Subsection": {
+                const subscription = await subSectionModel.findById(projectId);
+
+                return {
+                    data: subscription?.resources,
+                    projectName: subscription?.projectName,
+                };
+            }
+            default:
+                logger.info("Doing nothing...");
+                return null;
+        }
     }
 }
