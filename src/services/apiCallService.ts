@@ -139,4 +139,21 @@ export class ApiCallService {
             }
         }
     }
+
+    async getSubscriptionById(companyId: string) {
+        try {
+            const response = await axios.get(
+                `${Config.SUBSCRIPTION_SERVICE_URI}/subscription/${companyId}`,
+            );
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return response.data;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                throw error.response?.data;
+            } else {
+                throw error;
+            }
+        }
+    }
 }

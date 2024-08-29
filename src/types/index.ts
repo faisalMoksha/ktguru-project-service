@@ -123,3 +123,44 @@ export interface ValueFromApiCall {
     declineURL: string;
     companyName: string;
 }
+
+export interface Plan {
+    planName: string;
+    planAmountUSD: number;
+    planAmountURO: number;
+    planAmountGBP: number;
+    totalProject: number;
+    totalConsultant: number;
+    isAnnual: boolean;
+    isCustomized: boolean;
+    freeTrial: boolean;
+    trialDuration: number;
+    title: string;
+    features: [string];
+    isActive: boolean;
+    stripePlanId: string;
+    planStartDate: string;
+    planEndDate: string;
+    addedBy: string;
+    createdAt: Date;
+    updatedAt: Date;
+    _id: string;
+}
+
+export interface Subscription {
+    userId: mongoose.Types.ObjectId;
+    companyId: string;
+    planId: Plan;
+    isActive: boolean;
+    paymentMode: string;
+    planDuration: string;
+    stripeSessionURL: string;
+    stripeSessionId: string;
+    stripeInvoiceId: string;
+    stripeInvoiceURL: string;
+    currency: string;
+    amount: number;
+    stripePlanId: string;
+    planStartDate: string;
+    planEndDate: string;
+}

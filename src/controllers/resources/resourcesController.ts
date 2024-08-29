@@ -5,6 +5,7 @@ import createHttpError from "http-errors";
 import {
     ChatEvents,
     KafKaTopic,
+    PlanNames,
     ResourcesStatus,
     Roles,
 } from "../../constants";
@@ -12,7 +13,7 @@ import { ApiCallService } from "../../services/apiCallService";
 import { ProjectService } from "../../services/projectService";
 import { SubSectionService } from "../../services/subSectionService";
 import { ResourcesServices } from "../../services/resourcesService";
-import { ValueFromApiCall, VerificationToken } from "../../types";
+import { Subscription, ValueFromApiCall, VerificationToken } from "../../types";
 import { MessageBroker } from "../../types/broker";
 import { Config } from "../../config";
 
@@ -27,9 +28,6 @@ export class ResourcesController {
     ) {}
 
     add = async (req: AuthRequest, res: Response, next: NextFunction) => {
-        //TODO:1. Check subscription
-        //TODO:2. Check resource limit
-
         const { name, email, message, projectId, subSectionIds, role } =
             req.body;
 
@@ -50,6 +48,40 @@ export class ResourcesController {
 
         try {
             const getProject = await this.projectService.findById(projectId);
+
+            const subscription: Subscription =
+                await this.apiCallService.getSubscriptionById(
+                    String(getProject?.companyId),
+                );
+
+            if (!subscription) {
+                const error = createHttpError(
+                    422,
+                    "You cannot add resources because your plan has expired.",
+                );
+                return next(error);
+            }
+
+            const approvedResources = getProject?.resources.filter(
+                (item) => item.isApproved == true,
+            );
+
+            const filterRoleBased = approvedResources?.filter(
+                (item) =>
+                    item.userRole != Roles.ADMIN &&
+                    item.userRole != Roles.COMPANY_ADMIN,
+            );
+
+            if (
+                filterRoleBased &&
+                filterRoleBased.length >= subscription.planId.totalConsultant
+            ) {
+                const error = createHttpError(
+                    422,
+                    `Your current plan is ${subscription.planId.planName}, and you are limited to ${subscription.planId.totalConsultant} consultants.`,
+                );
+                return next(error);
+            }
 
             const user: ValueFromApiCall = await this.apiCallService.addUser({
                 email,
@@ -301,9 +333,6 @@ export class ResourcesController {
         res: Response,
         next: NextFunction,
     ) => {
-        //TODO:1. check subscription pro or basic
-        //TODO:2. check resource limit
-
         const { name, email, companyId, message } = req.body;
 
         if (!req.auth || !req.auth.sub) {
@@ -322,6 +351,25 @@ export class ResourcesController {
         const role = Roles.COMPANY_ADMIN;
 
         try {
+            const subscription: Subscription =
+                await this.apiCallService.getSubscriptionById(companyId);
+
+            if (!subscription) {
+                const error = createHttpError(
+                    422,
+                    "You cannot add a company admin because your plan has expired.",
+                );
+                return next(error);
+            }
+
+            if (subscription.planId.planName != PlanNames.ENTERPRISE) {
+                const error = createHttpError(
+                    422,
+                    `Your current plan is ${subscription.planId.planName}, you are not allowed to add company admin. Kindly upgrade your subscription to ${PlanNames.ENTERPRISE} Plan if you wish to add more Company Admins. Please drop a note to info@ktguru.com`,
+                );
+                return next(error);
+            }
+
             const user: ValueFromApiCall = await this.apiCallService.addUser({
                 email,
                 role,
@@ -499,7 +547,10 @@ export class ResourcesController {
 
             let getProjectIds: string[] = [];
 
-            if (tokenData.projectId) {
+            if (
+                tokenData.role == Roles.COMPANY_ADMIN ||
+                tokenData.role == Roles.CONSULTANT
+            ) {
                 await this.projectService.verifyResource({
                     projectId: tokenData.projectId,
                     userId: tokenData.userId,
@@ -514,7 +565,7 @@ export class ResourcesController {
                 getProjectIds.push(tokenData.projectId);
             }
 
-            if (tokenData.companyId) {
+            if (tokenData.role == Roles.COMPANY_ADMIN) {
                 await this.projectService.verifyCompanyManager(
                     tokenData.userId,
                     tokenData.companyId,

@@ -14,6 +14,12 @@ export const ResourcesStatus = {
     REJECTED_BY_USER: "rejectedByUser",
 } as const;
 
+export const PlanNames = {
+    ENTERPRISE: "Enterprise",
+    BASIC: "Basic",
+    PRO: "Pro",
+};
+
 export const KafKaTopic = {
     User: "user",
     Chat: "chat",
