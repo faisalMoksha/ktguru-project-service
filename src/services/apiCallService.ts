@@ -82,6 +82,7 @@ export class ApiCallService {
         password,
         userId,
         companyId,
+        role,
     }: SignupUser) {
         try {
             const response = await axios.post(
@@ -92,6 +93,7 @@ export class ApiCallService {
                     password,
                     userId,
                     companyId,
+                    role,
                 },
             );
 

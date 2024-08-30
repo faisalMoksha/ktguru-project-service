@@ -5,6 +5,7 @@ import createHttpError from "http-errors";
 import {
     ChatEvents,
     KafKaTopic,
+    MailEvents,
     PlanNames,
     ResourcesStatus,
     Roles,
@@ -153,7 +154,7 @@ export class ResourcesController {
 
                 // send kafka message to mail service
                 const brokerMessage = {
-                    event_type: "",
+                    event_type: MailEvents.SEND_MAIL,
                     data: {
                         to: email,
                         subject: "KT-Guru Consultant Invitation",
@@ -411,7 +412,7 @@ export class ResourcesController {
 
                 // send kafka message to mail service
                 const brokerMessage = {
-                    event_type: "",
+                    event_type: MailEvents.SEND_MAIL,
                     data: {
                         to: email,
                         subject: "KT-Guru Invitation for company manager",
@@ -514,7 +515,7 @@ export class ResourcesController {
     };
 
     signupUser = async (req: Request, res: Response, next: NextFunction) => {
-        //TODO:1. check the resource limit
+        //TODO:1. Prepare login credentials and send
 
         const { firstName, lastName, password } = req.body;
 
@@ -532,12 +533,59 @@ export class ResourcesController {
                 return next(error);
             }
 
+            if (tokenData.projectId) {
+                const getProject = await this.projectService.findById(
+                    tokenData.projectId,
+                );
+
+                const addedBy = await this.resourcesService.getUserInfo(
+                    String(tokenData.addedBy),
+                );
+
+                const subscription: Subscription =
+                    await this.apiCallService.getSubscriptionById(
+                        String(tokenData.companyId),
+                    );
+
+                if (!subscription) {
+                    const error = createHttpError(
+                        422,
+                        "You cannot add resources because your plan has expired.",
+                    );
+                    return next(error);
+                }
+
+                const approvedResources = getProject?.resources.filter(
+                    (item) => item.isApproved == true,
+                );
+
+                const filterRoleBased = approvedResources?.filter(
+                    (item) =>
+                        item.userRole != Roles.ADMIN &&
+                        item.userRole != Roles.COMPANY_ADMIN,
+                );
+
+                if (
+                    filterRoleBased &&
+                    filterRoleBased.length >=
+                        subscription.planId.totalConsultant
+                ) {
+                    const error = createHttpError(
+                        422,
+                        `Oops, the invitation timed out, please reach out to ${addedBy?.email} from 
+                        ${getProject?.projectName}`,
+                    );
+                    return next(error);
+                }
+            }
+
             const user = await this.apiCallService.signupUser({
                 firstName,
                 lastName,
                 password,
                 userId: tokenData.userId,
-                companyId: tokenData.companyId ? tokenData.companyId : null,
+                companyId: tokenData.companyId,
+                role: tokenData.role,
             });
 
             if (!user) {
@@ -601,8 +649,6 @@ export class ResourcesController {
 
             await this.apiCallService.deleteToken(tokenData._id);
 
-            //TODO:2. prepare login credentials and send
-
             res.status(201).json({ success: true, message: "Done!" });
         } catch (error) {
             return next(error);
@@ -614,10 +660,8 @@ export class ResourcesController {
         res: Response,
         next: NextFunction,
     ) => {
-        //TODO:1. check subscription
-        //TODO:2. check resource length
-        //TODO:3. send token for redirect on home page
-        //TODO:4. isApproved true for company
+        //TODO:1. Prepare login credentials and send
+        //TODO:2. isApproved true for company
 
         const token = req.params.token;
 
@@ -631,6 +675,47 @@ export class ResourcesController {
                     "The link you followed seems to be incorrect or no longer active.",
                 );
                 return next(error);
+            }
+
+            if (tokenData.projectId) {
+                const getProject = await this.projectService.findById(
+                    tokenData.projectId,
+                );
+
+                const subscription: Subscription =
+                    await this.apiCallService.getSubscriptionById(
+                        String(getProject?.companyId),
+                    );
+
+                if (!subscription) {
+                    const error = createHttpError(
+                        422,
+                        "You cannot add resources because your plan has expired.",
+                    );
+                    return next(error);
+                }
+
+                const approvedResources = getProject?.resources.filter(
+                    (item) => item.isApproved == true,
+                );
+
+                const filterRoleBased = approvedResources?.filter(
+                    (item) =>
+                        item.userRole != Roles.ADMIN &&
+                        item.userRole != Roles.COMPANY_ADMIN,
+                );
+
+                if (
+                    filterRoleBased &&
+                    filterRoleBased.length >=
+                        subscription.planId.totalConsultant
+                ) {
+                    const error = createHttpError(
+                        422,
+                        `We apologize, but it's not possible for you to accept the invitation due to the project's restriction of ${subscription.planId.totalConsultant} consultants. Please reach out to the project administrator.`,
+                    );
+                    return next(error);
+                }
             }
 
             await this.projectService.verifyResource({
@@ -739,7 +824,7 @@ export class ResourcesController {
 
                 // send kafka message to mail service
                 const brokerMessage = {
-                    event_type: "",
+                    event_type: MailEvents.SEND_MAIL,
                     data: {
                         to: addedByUser?.email,
                         subject: "Invitation Declined",

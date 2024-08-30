@@ -14,9 +14,6 @@ export class ProjectService {
         createdBy,
         companyName,
     }: RequestBody) {
-        //TODO:1. Check subscription is active
-        //TODO:2. Check project limit
-
         let data = await projectModel.create({
             projectName,
             projectDesc,
@@ -349,5 +346,9 @@ export class ProjectService {
 
     async getProjectsIds(companyId: string) {
         return await projectModel.distinct("_id", { companyId });
+    }
+
+    async getProjectsByCompanyId(companyId: string) {
+        return await projectModel.find({ companyId, isActive: true });
     }
 }

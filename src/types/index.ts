@@ -101,7 +101,8 @@ export interface SignupUser {
     lastName: string;
     password: string;
     userId: string;
-    companyId: string | null;
+    companyId: string;
+    role: string;
 }
 
 export interface UserCache {

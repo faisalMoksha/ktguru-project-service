@@ -5,7 +5,7 @@ import createHttpError from "http-errors";
 import { ProjectService } from "../../services/projectService";
 import { validationResult } from "express-validator";
 import { ApiCallService } from "../../services/apiCallService";
-import { Resources } from "../../types";
+import { Resources, Subscription } from "../../types";
 import { MessageBroker } from "../../types/broker";
 import { ChatEvents, KafKaTopic } from "../../constants";
 import { Config } from "../../config";
@@ -41,6 +41,36 @@ export class ProjectController {
             }
 
             const createdBy = req.auth.sub;
+
+            const subscription: Subscription =
+                await this.apiCallService.getSubscriptionById(companyId);
+
+            if (!subscription) {
+                const error = createHttpError(
+                    422,
+                    "You're unable to create a project as your plan has expired.",
+                );
+                return next(error);
+            }
+
+            const projects =
+                await this.projectService.getProjectsByCompanyId(companyId);
+
+            if (projects.length >= 1 && subscription.planId.freeTrial) {
+                const error = createHttpError(
+                    422,
+                    "Your current status is on a free trial Basic, and you are limited to 1 project. Kindly upgrade your subscription to be able to create more projects. Please reach out to info@ktguru.com for more information",
+                );
+                return next(error);
+            }
+
+            if (projects.length >= subscription.planId.totalProject) {
+                const error = createHttpError(
+                    422,
+                    `Your current plan is ${subscription.planId.planName}, and you are limited to ${subscription.planId.totalProject} project.`,
+                );
+                return next(error);
+            }
 
             const resource: { companyName: string; teamsData: Resources[] } =
                 await this.apiCallService.getCompanyResourceData(companyId);

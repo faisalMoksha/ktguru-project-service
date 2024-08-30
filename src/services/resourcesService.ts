@@ -82,19 +82,39 @@ export class ResourcesServices {
     async getResource(projectId: string, model_type: string) {
         switch (model_type) {
             case "Project": {
-                const project = await projectModel.findById(projectId);
+                const project = await projectModel.findById(projectId).select({
+                    projectName: 1,
+                    resources: {
+                        $filter: {
+                            input: "$resources",
+                            as: "resource",
+                            cond: { $eq: ["$$resource.isApproved", true] },
+                        },
+                    },
+                });
 
                 return {
-                    data: project?.resources,
+                    data: project?.resources || [],
                     projectName: project?.projectName,
                 };
             }
 
             case "Subsection": {
-                const subscription = await subSectionModel.findById(projectId);
+                const subscription = await subSectionModel
+                    .findById(projectId)
+                    .select({
+                        projectName: 1,
+                        resources: {
+                            $filter: {
+                                input: "$resources",
+                                as: "resource",
+                                cond: { $eq: ["$$resource.isApproved", true] },
+                            },
+                        },
+                    });
 
                 return {
-                    data: subscription?.resources,
+                    data: subscription?.resources || [],
                     projectName: subscription?.projectName,
                 };
             }
