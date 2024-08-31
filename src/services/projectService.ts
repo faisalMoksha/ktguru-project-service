@@ -51,7 +51,6 @@ export class ProjectService {
     }
 
     async getAll(userId: string) {
-        //TODO:1. Check old code
         return await projectModel
             .find({
                 resources: {
@@ -67,7 +66,12 @@ export class ProjectService {
     }
 
     async findById(id: string) {
-        return await projectModel.findById(id);
+        return await projectModel.findById(id).populate({
+            path: "resources.userId",
+            model: "UserCache",
+            select: "firstName lastName avatar",
+            foreignField: "userId",
+        });
     }
 
     async addUserInProject({ userId, projectId, role }: AddUserInProject) {

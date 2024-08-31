@@ -1,9 +1,9 @@
 import userCacheModel from "../models/userCacheModel";
-import { MessagePayload } from "../types";
+import { MessagePayloadUser } from "../types";
 
-export const handleUserUpdate = async (value: string) => {
+export const userHandler = async (value: string) => {
     try {
-        const user: MessagePayload = JSON.parse(value);
+        const user: MessagePayloadUser = JSON.parse(value);
 
         return await userCacheModel.updateOne(
             {

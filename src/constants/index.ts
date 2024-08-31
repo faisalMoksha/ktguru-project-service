@@ -24,6 +24,7 @@ export const KafKaTopic = {
     User: "user",
     Chat: "chat",
     Mail: "mail",
+    Subscription: "subscription",
 } as const;
 
 export enum MailEvents {

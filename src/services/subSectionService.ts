@@ -28,7 +28,6 @@ export class SubSectionService {
         }
 
         const projectData = await projectModel.findById(projectId);
-        // .populate("companyId", "teams"); //TODO:1. uncomment (populate company data)
 
         if (!projectData) {
             const error = createHttpError(500, `Project data not found`);

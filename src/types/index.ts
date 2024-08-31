@@ -113,9 +113,14 @@ export interface UserCache {
     email: string;
 }
 
-export interface MessagePayload {
+export interface MessagePayloadUser {
     event_type: string;
     data: UserCache;
+}
+
+export interface MessagePayloadProject {
+    event_type: string;
+    data: { isActive: boolean; companyId: string };
 }
 
 export interface ValueFromApiCall {

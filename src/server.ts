@@ -18,7 +18,10 @@ const startServer = async () => {
         await broker.connectProducer();
 
         await broker.connectConsumer();
-        await broker.consumeMessage([KafKaTopic.User], false);
+        await broker.consumeMessage(
+            [KafKaTopic.User, KafKaTopic.Subscription],
+            false,
+        );
 
         app.listen(PORT, () => logger.info(`Server listening on ${PORT}`));
     } catch (error: unknown) {

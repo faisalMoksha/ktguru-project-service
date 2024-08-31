@@ -198,8 +198,6 @@ export class ResourcesController {
     };
 
     getDetails = async (req: Request, res: Response, next: NextFunction) => {
-        //TODO:1. Populate user data and send in response
-
         const { projectId, userId } = req.body;
 
         try {
@@ -550,7 +548,7 @@ export class ResourcesController {
                 if (!subscription) {
                     const error = createHttpError(
                         422,
-                        "You cannot add resources because your plan has expired.",
+                        `Oops, plan has expired, please reach out to ${addedBy?.email}`,
                     );
                     return next(error);
                 }
@@ -690,7 +688,7 @@ export class ResourcesController {
                 if (!subscription) {
                     const error = createHttpError(
                         422,
-                        "You cannot add resources because your plan has expired.",
+                        `Oops, plan has expired, please reach out to admin`,
                     );
                     return next(error);
                 }

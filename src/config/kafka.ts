@@ -8,7 +8,8 @@ import {
 import { MessageBroker } from "../types/broker";
 import logger from "./logger";
 import { KafKaTopic } from "../constants";
-import { handleUserUpdate } from "../utils/userUpdateHandler";
+import { projectHandler } from "../handlers/projectHandler";
+import { userHandler } from "../handlers/useHandler";
 
 export class KafkaBroker implements MessageBroker {
     private consumer: Consumer;
@@ -92,10 +93,17 @@ export class KafkaBroker implements MessageBroker {
 
                 switch (topic) {
                     case KafKaTopic.User:
-                        await handleUserUpdate(
+                        await userHandler(
                             message.value ? message.value.toString() : "",
                         );
                         return;
+
+                    case KafKaTopic.Subscription:
+                        await projectHandler(
+                            message.value ? message.value.toString() : "",
+                        );
+                        return;
+
                     default:
                         logger.info("Doing nothing...");
                 }

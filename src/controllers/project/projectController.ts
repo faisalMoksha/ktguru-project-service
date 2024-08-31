@@ -113,8 +113,7 @@ export class ProjectController {
                 message: "Successfuly project created",
             });
         } catch (error) {
-            next(error);
-            return;
+            return next(error);
         }
     };
 
