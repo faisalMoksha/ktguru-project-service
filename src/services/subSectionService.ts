@@ -1,4 +1,4 @@
-import { AddUserInProject, RequestBody } from "../types";
+import { AddUserInProject, RequestBody, SubSectionPayload } from "../types";
 import subSectionModel from "../models/subSectionModel";
 import createHttpError from "http-errors";
 import projectModel from "../models/projectModel";
@@ -111,7 +111,7 @@ export class SubSectionService {
     }
 
     async getAll(userId: string, projectId: string) {
-        return await subSectionModel
+        const data = await subSectionModel
             .find({
                 projectId: projectId,
                 $and: [
@@ -128,6 +128,8 @@ export class SubSectionService {
                 select: "firstName lastName avatar",
                 foreignField: "userId",
             });
+
+        return data as unknown as SubSectionPayload[] | [];
     }
 
     async findById(id: string) {

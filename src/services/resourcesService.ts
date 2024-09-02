@@ -1,7 +1,12 @@
 import createHttpError from "http-errors";
 import { ProjectService } from "./projectService";
 import { SubSectionService } from "./subSectionService";
-import { AddUserInProject, ProjectResource } from "../types";
+import {
+    AddUserInProject,
+    ProjectPayload,
+    ProjectResource,
+    SubSectionPayload,
+} from "../types";
 import userCacheModel from "../models/userCacheModel";
 import projectModel from "../models/projectModel";
 import logger from "../config/logger";
@@ -12,29 +17,32 @@ const subSectionService = new SubSectionService();
 
 export class ResourcesServices {
     async formatResources({ userId, projectId }: AddUserInProject) {
-        const projectData = await projectService.findById(projectId);
+        const projectData: ProjectPayload | null =
+            await projectService.findById(projectId);
 
         if (!projectData) {
             const error = createHttpError(404, "Project not found");
             throw error;
         }
 
-        const subsection = await subSectionService.getAll(userId, projectId);
+        const subsection: SubSectionPayload[] | [] =
+            await subSectionService.getAll(userId, projectId);
 
         const matchingSubSection = subsection.reduce<ProjectResource[]>(
             (acc, subsectionData) => {
                 const matchedResource = subsectionData.resources.find(
-                    (resource) => resource.userId._id.toString() === userId,
+                    (resource) => resource.userId.userId === userId,
                 );
 
                 if (matchedResource) {
                     acc.push({
                         _id: subsectionData._id,
                         projectName: subsectionData.projectName,
-                        // @ts-ignore
                         userId: matchedResource.userId,
                         userRole: matchedResource.userRole,
                         isApproved: matchedResource.isApproved,
+                        status: matchedResource.status,
+                        createdAt: matchedResource.createdAt,
                     });
                 }
                 return acc;
@@ -43,7 +51,7 @@ export class ResourcesServices {
         );
 
         const matchedResourcesProject = projectData.resources.find(
-            (resource) => resource.userId._id.toString() === userId,
+            (resource) => resource.userId.userId.toString() === userId,
         );
 
         const notPresentSubsection = await subSectionService.notPresent({

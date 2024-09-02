@@ -4,7 +4,7 @@ import createJWKSMock from "mock-jwks";
 import axios from "axios";
 import app from "../../src/app";
 import { Config } from "../../src/config";
-import { ResourcesStatus, Roles } from "../../src/constants";
+import { Roles } from "../../src/constants";
 import { Project } from "../../src/types";
 import projectModel from "../../src/models/projectModel";
 
@@ -45,13 +45,29 @@ describe("POST /project/create", () => {
             // Mock the axios.get call
             mockedAxios.get.mockResolvedValueOnce({
                 data: {
-                    resources: [
-                        {
-                            userId: "6512a4c42a6759c77211660e",
-                            status: ResourcesStatus.ACTIVE,
-                            role: Roles.COMPANY,
-                        },
-                    ],
+                    userId: "6512a4c42a6759c77211660e",
+                    companyId: "651d94b37c81f740f30892de",
+                    planId: "651d94b37c81f740f30892ce",
+                    isActive: true,
+                    paymentMode: "Stripe",
+                    planDuration: 6,
+                    stripeSessionURL: "string",
+                    stripeSessionId: "string",
+                    stripeInvoiceId: "string",
+                    stripeInvoiceURL: "string",
+                    currency: "usd",
+                    amount: 785,
+                    stripePlanId: "string",
+                    planStartDate: "string",
+                    planEndDate: "string",
+                },
+            });
+
+            // Mock the axios.get call
+            mockedAxios.get.mockResolvedValueOnce({
+                data: {
+                    companyName: "Company-name",
+                    teamsData: [],
                 },
             });
 
@@ -92,13 +108,29 @@ describe("POST /project/create", () => {
             // Mock the axios.get call
             mockedAxios.get.mockResolvedValueOnce({
                 data: {
-                    resources: [
-                        {
-                            userId: "6512a4c42a6759c77211660e",
-                            status: ResourcesStatus.ACTIVE,
-                            role: Roles.COMPANY,
-                        },
-                    ],
+                    userId: "6512a4c42a6759c77211660e",
+                    companyId: "651d94b37c81f740f30892de",
+                    planId: "651d94b37c81f740f30892ce",
+                    isActive: true,
+                    paymentMode: "Stripe",
+                    planDuration: 6,
+                    stripeSessionURL: "string",
+                    stripeSessionId: "string",
+                    stripeInvoiceId: "string",
+                    stripeInvoiceURL: "string",
+                    currency: "usd",
+                    amount: 785,
+                    stripePlanId: "string",
+                    planStartDate: "string",
+                    planEndDate: "string",
+                },
+            });
+
+            // Mock the axios.get call
+            mockedAxios.get.mockResolvedValueOnce({
+                data: {
+                    companyName: "Company-name",
+                    teamsData: [],
                 },
             });
 

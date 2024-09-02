@@ -5,6 +5,7 @@ import app from "../../src/app";
 import { Config } from "../../src/config";
 import { ResourcesStatus, Roles } from "../../src/constants";
 import projectModel from "../../src/models/projectModel";
+import userCacheModel from "../../src/models/userCacheModel";
 
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -36,12 +37,20 @@ describe("POST /resources/signup-resource", () => {
                         status: ResourcesStatus.ACTIVE,
                     },
                     {
-                        userId: "6512a4c42a6759c772116456",
+                        userId: "6512a4c42a6759c77211660e",
                         userRole: Roles.CONSULTANT,
                         isApproved: true,
                         status: ResourcesStatus.PENDING,
                     },
                 ],
+            });
+
+            await userCacheModel.create({
+                userId: "6512a4c42a6759c772116456",
+            });
+
+            await userCacheModel.create({
+                userId: "6512a4c42a6759c77211660e",
             });
 
             // Arrange
@@ -56,8 +65,9 @@ describe("POST /resources/signup-resource", () => {
                 data: {
                     _id: "wedwbdkjwednkjewndkwe",
                     userId: "6512a4c42a6759c77211660e",
-                    projectId: newData._id,
-                    companyId: null,
+                    projectId: null,
+                    companyId: "651d94b37c81f740f30892de",
+                    role: Roles.CONSULTANT,
                 },
             });
 
@@ -94,7 +104,8 @@ describe("POST /resources/signup-resource", () => {
                     lastName: "Khan",
                     password: "Password@123",
                     userId: "6512a4c42a6759c77211660e",
-                    companyId: null,
+                    companyId: "651d94b37c81f740f30892de",
+                    role: Roles.CONSULTANT,
                 },
             );
 

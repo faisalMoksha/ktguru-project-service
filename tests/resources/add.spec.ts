@@ -11,7 +11,7 @@ import { Project } from "../../src/types";
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe("POST /resources/add-resources", () => {
+describe("POST /resources", () => {
     let jwks: ReturnType<typeof createJWKSMock>;
 
     beforeEach(async () => {
@@ -54,10 +54,33 @@ describe("POST /resources/add-resources", () => {
             };
 
             // Mock the axios.get call
+            mockedAxios.get.mockResolvedValueOnce({
+                data: {
+                    userId: "6512a4c42a6759c77211660e",
+                    companyId: "651d94b37c81f740f30892de",
+                    planId: { planName: "Enterprise" },
+                    isActive: true,
+                    paymentMode: "Stripe",
+                    planDuration: 6,
+                    stripeSessionURL: "string",
+                    stripeSessionId: "string",
+                    stripeInvoiceId: "string",
+                    stripeInvoiceURL: "string",
+                    currency: "usd",
+                    amount: 785,
+                    stripePlanId: "string",
+                    planStartDate: "string",
+                    planEndDate: "string",
+                },
+            });
+
+            // Mock the axios.get call
             mockedAxios.post.mockResolvedValueOnce({
                 data: {
                     userId: "6512a4c42a6759c77211660e",
-                    url: "http://localhost:5501/url...",
+                    url: "string",
+                    declineURL: "string",
+                    companyName: "string",
                 },
             });
 
@@ -83,7 +106,7 @@ describe("POST /resources/add-resources", () => {
                     email: "example@gmail.com",
                     role: Roles.CONSULTANT,
                     projectId: String(newData._id),
-                    companyId: undefined,
+                    companyId: "651d94b37c81f740f30892de",
                     addedBy: "6512a4c42a6759c77211660e",
                 },
             );
@@ -114,10 +137,33 @@ describe("POST /resources/add-resources", () => {
             };
 
             // Mock the axios.get call
+            mockedAxios.get.mockResolvedValueOnce({
+                data: {
+                    userId: "6512a4c42a6759c77211660e",
+                    companyId: "651d94b37c81f740f30892de",
+                    planId: { planName: "Enterprise" },
+                    isActive: true,
+                    paymentMode: "Stripe",
+                    planDuration: 6,
+                    stripeSessionURL: "string",
+                    stripeSessionId: "string",
+                    stripeInvoiceId: "string",
+                    stripeInvoiceURL: "string",
+                    currency: "usd",
+                    amount: 785,
+                    stripePlanId: "string",
+                    planStartDate: "string",
+                    planEndDate: "string",
+                },
+            });
+
+            // Mock the axios.get call
             mockedAxios.post.mockResolvedValueOnce({
                 data: {
                     userId: "6512a4c42a6759c77211660e",
-                    url: "http://localhost:5501/url...",
+                    url: "string",
+                    declineURL: "string",
+                    companyName: "string",
                 },
             });
 

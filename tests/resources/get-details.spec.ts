@@ -5,8 +5,9 @@ import app from "../../src/app";
 import { Config } from "../../src/config";
 import { ResourcesStatus, Roles } from "../../src/constants";
 import projectModel from "../../src/models/projectModel";
+import userCacheModel from "../../src/models/userCacheModel";
 
-describe("POST /resources/get-resources-details", () => {
+describe("POST /resources/detail", () => {
     let jwks: ReturnType<typeof createJWKSMock>;
 
     beforeEach(async () => {
@@ -46,6 +47,14 @@ describe("POST /resources/get-resources-details", () => {
                 ],
             });
 
+            await userCacheModel.create({
+                userId: "6512a4c42a6759c772116456",
+            });
+
+            await userCacheModel.create({
+                userId: "6512a4c42a6759c772116987",
+            });
+
             // Arrange
             const data = {
                 userId: "6512a4c42a6759c772116987",
@@ -53,7 +62,7 @@ describe("POST /resources/get-resources-details", () => {
             };
 
             const accessToken = jwks.token({
-                sub: "6512a4c42a6759c77211660e",
+                sub: "6512a4c42a6759c772116456",
                 role: Roles.COMPANY,
             });
 

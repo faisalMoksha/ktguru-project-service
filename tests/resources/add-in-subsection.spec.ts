@@ -71,6 +71,10 @@ describe("POST /resources/add-in-subsection", () => {
             });
 
             await userCacheModel.create({
+                userId: "6512a4c42a6759c772116456",
+            });
+
+            await userCacheModel.create({
                 userId: "6512a4c42a6759c772115342",
             });
 

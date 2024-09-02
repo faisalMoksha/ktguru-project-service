@@ -22,16 +22,20 @@ export interface Resources {
 }
 
 export interface ProjectResource {
+    _id: string;
     userId: {
         _id: string;
         firstName: string;
         lastName: string;
         email: string;
         avatar: string;
-        id: string;
+        userId: string;
     };
+    projectName: string;
     userRole: string;
     isApproved: boolean;
+    status: string;
+    createdAt: Date;
 }
 
 export interface Project {
@@ -44,6 +48,55 @@ export interface Project {
     companyId: mongoose.Types.ObjectId;
     createdBy: mongoose.Types.ObjectId;
     resources: Resources[];
+}
+
+export interface ProjectPayload {
+    _id: string;
+    projectName: string;
+    projectDesc: string;
+    technology: string;
+    companyName: string;
+    isActive: boolean;
+    companyId: mongoose.Types.ObjectId;
+    createdBy: mongoose.Types.ObjectId;
+    resources: {
+        userId: {
+            _id: string;
+            firstName: string;
+            lastName: string;
+            email: string;
+            avatar: string;
+            userId: string;
+        };
+        userRole: string;
+        isApproved: boolean;
+        status: string;
+        createdAt: Date;
+    }[];
+}
+
+export interface SubSectionPayload {
+    _id: string;
+    projectName: string;
+    projectDesc: string;
+    technology: string;
+    isActive: boolean;
+    projectId: mongoose.Types.ObjectId;
+    createdBy: mongoose.Types.ObjectId;
+    resources: {
+        userId: {
+            _id: string;
+            firstName: string;
+            lastName: string;
+            email: string;
+            avatar: string;
+            userId: string;
+        };
+        userRole: string;
+        isApproved: boolean;
+        status: string;
+        createdAt: Date;
+    }[];
 }
 
 export interface SubSection {

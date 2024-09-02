@@ -49,8 +49,8 @@ describe("POST /resources/verify", () => {
                 data: {
                     _id: "wedwbdkjwednkjewndkwe",
                     userId: "6512a4c42a6759c77211660e",
-                    projectId: newData._id,
-                    companyId: null,
+                    projectId: null,
+                    companyId: "651d94b37c81f740f30892de",
                 },
             });
 

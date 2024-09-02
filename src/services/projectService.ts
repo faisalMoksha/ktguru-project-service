@@ -1,5 +1,5 @@
 import createHttpError from "http-errors";
-import { AddUserInProject, RequestBody } from "../types";
+import { AddUserInProject, ProjectPayload, RequestBody } from "../types";
 import projectModel from "../models/projectModel";
 import { ResourcesStatus, Roles } from "../constants";
 import subSectionModel from "../models/subSectionModel";
@@ -66,12 +66,21 @@ export class ProjectService {
     }
 
     async findById(id: string) {
-        return await projectModel.findById(id).populate({
+        // return await projectModel.findById(id).populate({
+        //     path: "resources.userId",
+        //     model: "UserCache",
+        //     select: "firstName lastName avatar",
+        //     foreignField: "userId",
+        // });
+
+        const projectData = await projectModel.findById(id).populate({
             path: "resources.userId",
             model: "UserCache",
-            select: "firstName lastName avatar",
+            select: "firstName lastName avatar email userId",
             foreignField: "userId",
         });
+
+        return projectData as unknown as ProjectPayload | null;
     }
 
     async addUserInProject({ userId, projectId, role }: AddUserInProject) {
