@@ -5,10 +5,17 @@ import { globalErrorHandler } from "./middlewares/globalErrorHandler";
 import projectRouter from "./routes/project";
 import subSectionRouter from "./routes/sub-section";
 import resourcesRouter from "./routes/resources";
+import { Config } from "./config";
 
 const app = express();
 
-app.use(cors());
+const ALLOWED_DOMAINS = [Config.FRONTEND_URL];
+app.use(
+    cors({
+        origin: ALLOWED_DOMAINS as string[],
+    }),
+);
+
 app.use(express.json());
 app.use(express.static("public"));
 app.use(cookieParser());

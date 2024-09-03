@@ -16,6 +16,8 @@ const {
     USER_SERVICE_URI,
     SUBSCRIPTION_SERVICE_URI,
     KAFKA_BROKER,
+    KAFKA_SASL_USER_NAME,
+    KAFKA_SASL_PASSWORD,
 } = process.env;
 
 export const Config = {
@@ -29,4 +31,6 @@ export const Config = {
     USER_SERVICE_URI,
     SUBSCRIPTION_SERVICE_URI,
     KAFKA_BROKER,
+    KAFKA_SASL_USER_NAME,
+    KAFKA_SASL_PASSWORD,
 };

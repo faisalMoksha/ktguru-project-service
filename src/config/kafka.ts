@@ -2,6 +2,7 @@ import {
     Consumer,
     EachMessagePayload,
     Kafka,
+    KafkaConfig,
     Partitioners,
     Producer,
 } from "kafkajs";
@@ -10,13 +11,32 @@ import logger from "./logger";
 import { KafKaTopic } from "../constants";
 import { projectHandler } from "../handlers/projectHandler";
 import { userHandler } from "../handlers/useHandler";
+import { Config } from ".";
 
 export class KafkaBroker implements MessageBroker {
     private consumer: Consumer;
     private producer: Producer;
 
     constructor(clientId: string, brokers: string[]) {
-        const kafka = new Kafka({ clientId, brokers });
+        let kafkaConfig: KafkaConfig = {
+            clientId,
+            brokers,
+        };
+
+        if (process.env.NODE_ENV === "production") {
+            kafkaConfig = {
+                ...kafkaConfig,
+                ssl: true,
+                connectionTimeout: 45000,
+                sasl: {
+                    mechanism: "plain",
+                    username: Config.KAFKA_SASL_USER_NAME!,
+                    password: Config.KAFKA_SASL_PASSWORD!,
+                },
+            };
+        }
+
+        const kafka = new Kafka(kafkaConfig);
 
         this.consumer = kafka.consumer({ groupId: clientId });
 
