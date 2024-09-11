@@ -166,6 +166,7 @@ export class ProjectController {
             const userId = req.auth.sub;
 
             const data = await this.projectService.getAll(userId);
+
             res.status(200).json({ data });
         } catch (error) {
             return next(error);

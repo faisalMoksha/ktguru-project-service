@@ -66,19 +66,20 @@ export class ProjectService {
     }
 
     async findById(id: string) {
-        // return await projectModel.findById(id).populate({
-        //     path: "resources.userId",
-        //     model: "UserCache",
-        //     select: "firstName lastName avatar",
-        //     foreignField: "userId",
-        // });
-
-        const projectData = await projectModel.findById(id).populate({
-            path: "resources.userId",
-            model: "UserCache",
-            select: "firstName lastName avatar email userId",
-            foreignField: "userId",
-        });
+        const projectData = await projectModel
+            .findById(id)
+            .populate({
+                path: "resources.userId",
+                model: "UserCache",
+                select: "firstName lastName avatar email userId",
+                foreignField: "userId",
+            })
+            .populate({
+                path: "createdBy",
+                model: "UserCache",
+                select: "firstName lastName avatar email userId",
+                foreignField: "userId",
+            });
 
         return projectData as unknown as ProjectPayload | null;
     }
