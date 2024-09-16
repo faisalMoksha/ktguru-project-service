@@ -133,7 +133,20 @@ export class SubSectionService {
     }
 
     async findById(id: string) {
-        return await subSectionModel.findById(id);
+        return await subSectionModel
+            .findById(id)
+            .populate({
+                path: "resources.userId",
+                model: "UserCache",
+                select: "firstName lastName avatar email userId",
+                foreignField: "userId",
+            })
+            .populate({
+                path: "createdBy",
+                model: "UserCache",
+                select: "firstName lastName avatar email userId",
+                foreignField: "userId",
+            });
     }
 
     async addUserInSubSection({ userId, projectId }: AddUserInProject) {
