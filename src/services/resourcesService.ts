@@ -31,7 +31,7 @@ export class ResourcesServices {
         const matchingSubSection = subsection.reduce<ProjectResource[]>(
             (acc, subsectionData) => {
                 const matchedResource = subsectionData.resources.find(
-                    (resource) => resource.userId.userId === userId,
+                    (resource) => resource.userId.userId.toString() === userId,
                 );
 
                 if (matchedResource) {
@@ -45,6 +45,7 @@ export class ResourcesServices {
                         createdAt: matchedResource.createdAt,
                     });
                 }
+
                 return acc;
             },
             [],
@@ -90,16 +91,24 @@ export class ResourcesServices {
     async getResource(projectId: string, model_type: string) {
         switch (model_type) {
             case "Project": {
-                const project = await projectModel.findById(projectId).select({
-                    projectName: 1,
-                    resources: {
-                        $filter: {
-                            input: "$resources",
-                            as: "resource",
-                            cond: { $eq: ["$$resource.isApproved", true] },
+                const project = await projectModel
+                    .findById(projectId)
+                    .select({
+                        projectName: 1,
+                        resources: {
+                            $filter: {
+                                input: "$resources",
+                                as: "resource",
+                                cond: { $eq: ["$$resource.isApproved", true] },
+                            },
                         },
-                    },
-                });
+                    })
+                    .populate({
+                        path: "resources.userId",
+                        model: "UserCache",
+                        select: "firstName lastName avatar email",
+                        foreignField: "userId",
+                    });
 
                 return {
                     data: project?.resources || [],
@@ -119,6 +128,12 @@ export class ResourcesServices {
                                 cond: { $eq: ["$$resource.isApproved", true] },
                             },
                         },
+                    })
+                    .populate({
+                        path: "resources.userId",
+                        model: "UserCache",
+                        select: "firstName lastName avatar email",
+                        foreignField: "userId",
                     });
 
                 return {

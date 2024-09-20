@@ -29,11 +29,9 @@ export class ResourcesController {
     ) {}
 
     add = async (req: AuthRequest, res: Response, next: NextFunction) => {
-        const { name, email, message, projectId, subSectionIds, role } =
-            req.body;
+        const { email, message, projectId, subSectionIds, role } = req.body;
 
         this.logger.debug("New request to add resources", {
-            name,
             email,
             message,
             projectId,
@@ -194,7 +192,7 @@ export class ResourcesController {
 
         const data = await this.projectService.getResources(projectId);
 
-        res.status(200).json(data);
+        res.status(200).json(data?.resources);
     };
 
     getDetails = async (req: Request, res: Response, next: NextFunction) => {
@@ -260,9 +258,8 @@ export class ResourcesController {
                 });
 
                 res.status(200).json({
-                    message: "The user remove from project",
-                    result,
-                    // allSubProjects, //TODO:1 check this
+                    message: "User removed from project successfully",
+                    data: result,
                 });
             }
         } catch (error) {
@@ -318,9 +315,8 @@ export class ResourcesController {
             });
 
             res.status(201).json({
-                message: "The user added in sub section",
-                result,
-                // allSubProjects, //TODO:1. check this
+                message: "User added to project successfully",
+                data: result,
             });
         } catch (error) {
             return next(error);

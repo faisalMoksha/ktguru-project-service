@@ -116,6 +116,10 @@ export class ProjectService {
                 {
                     $set: {
                         "resources.$.status": ResourcesStatus.PENDING,
+                        "resources.$.userRole":
+                            role == Roles.CONSULTANT
+                                ? Roles.CONSULTANT
+                                : Roles.PROJECT_ADMIN,
                     },
                 },
             );
@@ -145,7 +149,7 @@ export class ProjectService {
         return await projectModel.findOne({ _id: projectId }).populate({
             path: "resources.userId",
             model: "UserCache",
-            select: "firstName lastName avatar",
+            select: "firstName lastName avatar email",
             foreignField: "userId",
         });
     }

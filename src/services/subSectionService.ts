@@ -2,7 +2,7 @@ import { AddUserInProject, RequestBody, SubSectionPayload } from "../types";
 import subSectionModel from "../models/subSectionModel";
 import createHttpError from "http-errors";
 import projectModel from "../models/projectModel";
-import { ResourcesStatus, Roles } from "../constants";
+import { Roles } from "../constants";
 
 export class SubSectionService {
     async create({
@@ -125,7 +125,7 @@ export class SubSectionService {
             .populate({
                 path: "resources.userId",
                 model: "UserCache",
-                select: "firstName lastName avatar",
+                select: "firstName lastName avatar email",
                 foreignField: "userId",
             });
 
@@ -150,79 +150,111 @@ export class SubSectionService {
     }
 
     async addUserInSubSection({ userId, projectId }: AddUserInProject) {
-        return await subSectionModel.updateMany({ projectId: projectId }, [
-            {
-                $set: {
-                    resources: {
-                        $cond: {
-                            if: { $in: [userId, "$resources.userId"] },
-                            then: {
-                                $map: {
-                                    input: "$resources",
-                                    as: "resource",
-                                    in: {
-                                        $cond: {
-                                            if: {
-                                                $eq: [
-                                                    "$$resource.userId",
-                                                    userId,
-                                                ],
-                                            },
-                                            then: {
-                                                $mergeObjects: [
-                                                    "$$resource",
-                                                    {
-                                                        status: ResourcesStatus.PENDING,
-                                                    },
-                                                ],
-                                            },
-                                            else: "$$resource",
-                                        },
-                                    },
-                                },
-                            },
-                            else: {
-                                $concatArrays: [
-                                    "$resources",
-                                    [
-                                        {
-                                            userRole: Roles.PROJECT_ADMIN,
-                                            userId: userId,
-                                            isApproved: false,
-                                            createdAt: new Date(),
-                                            status: ResourcesStatus.PENDING,
-                                        },
-                                    ],
-                                ],
-                            },
+        const subSections = await subSectionModel.find({
+            projectId: projectId,
+        });
+
+        for (const subSection of subSections) {
+            const userExists = subSection.resources.some(
+                (resource) => resource.userId.toString() === userId.toString(),
+            );
+
+            if (userExists) {
+                // If the user already exists, update the existing resource in this subsection
+                await subSectionModel.updateOne(
+                    {
+                        _id: subSection._id,
+                        "resources.userId": userId,
+                    },
+                    {
+                        $set: {
+                            "resources.$.userRole": Roles.PROJECT_ADMIN,
+                            "resources.$.isApproved": false,
+                            "resources.$.createdAt": new Date(),
                         },
                     },
-                },
-            },
-        ]);
-    }
-
-    async bulkAdd(userId: string, subSectionIds: [string]) {
-        return await subSectionModel.bulkWrite(
-            subSectionIds.map((subSectionId) => ({
-                updateOne: {
-                    filter: {
-                        _id: subSectionId,
-                        "resources.userId": { $ne: userId },
-                    },
-                    update: {
-                        $addToSet: {
+                );
+            } else {
+                // If the user does not exist, added a new resource entry to this subsection
+                await subSectionModel.updateOne(
+                    { _id: subSection._id },
+                    {
+                        $push: {
                             resources: {
-                                userRole: Roles.CONSULTANT,
                                 userId: userId,
+                                userRole: Roles.PROJECT_ADMIN,
                                 isApproved: false,
                                 createdAt: new Date(),
                             },
                         },
                     },
+                );
+            }
+        }
+    }
+
+    async bulkAdd(userId: string, subSectionIds: [string]) {
+        for (const subSection of subSectionIds) {
+            const userExists = await subSectionModel.findOne({
+                _id: subSection,
+                resources: {
+                    $elemMatch: { userId: userId },
                 },
-            })),
-        );
+            });
+
+            if (userExists) {
+                // If the user already exists, update the existing resource in this subsection
+                await subSectionModel.updateOne(
+                    {
+                        _id: subSection,
+                        "resources.userId": userId,
+                    },
+                    {
+                        $set: {
+                            "resources.$.userRole": Roles.CONSULTANT,
+                            "resources.$.isApproved": false,
+                            "resources.$.createdAt": new Date(),
+                        },
+                    },
+                );
+            } else {
+                // If the user does not exist, added a new resource entry to this subsection
+                await subSectionModel.updateOne(
+                    { _id: subSection },
+                    {
+                        $push: {
+                            resources: {
+                                userId: userId,
+                                userRole: Roles.CONSULTANT,
+                                isApproved: false,
+                                createdAt: new Date(),
+                            },
+                        },
+                    },
+                );
+            }
+        }
+
+        // return await subSectionModel.bulkWrite(
+        //     subSectionIds.map((subSectionId) => ({
+        //         updateOne: {
+        //             filter: {
+        //                 _id: subSectionId,
+        //                 "resources.userId": { $ne: userId },
+        //             },
+        //             update: {
+        //                 $addToSet: {
+        //                     resources: {
+        //                         userRole: Roles.CONSULTANT,
+        //                         userId: userId,
+        //                         isApproved: false,
+        //                         createdAt: new Date(),
+        //                     },
+        //                 },
+        //             },
+        //         },
+        //     })),
+        // );
     }
 
     async notPresent({ userId, projectId }: AddUserInProject) {
@@ -230,7 +262,14 @@ export class SubSectionService {
             projectId,
             $or: [
                 { "resources.userId": { $ne: userId } },
-                { "resources.userId": userId, "resources.isApproved": false },
+                {
+                    resources: {
+                        $elemMatch: {
+                            userId: userId,
+                            isApproved: false,
+                        },
+                    },
+                },
             ],
         });
     }
@@ -266,7 +305,12 @@ export class SubSectionService {
                     _id: projectId,
                     resources: { $elemMatch: { userId: userId } },
                 },
-                { $set: { "resources.$.isApproved": true } },
+                {
+                    $set: {
+                        "resources.$.isApproved": true,
+                        "resources.$.userRole": role,
+                    },
+                },
             )
             .populate({
                 path: "resources.userId",

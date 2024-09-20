@@ -9,7 +9,7 @@ import { Config } from "./config";
 
 const app = express();
 
-const ALLOWED_DOMAINS = [Config.FRONTEND_URL];
+const ALLOWED_DOMAINS = [Config.FRONTEND_URL, "http://localhost:3002"];
 app.use(
     cors({
         origin: ALLOWED_DOMAINS as string[],
