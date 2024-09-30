@@ -41,7 +41,6 @@ router.post(
 router.patch(
     "/:id",
     authenticate,
-    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN]),
     updateProjectValidator,
     asyncWrapper(projectController.update),
 );

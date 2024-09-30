@@ -31,22 +31,12 @@ const resourcesController = new ResourcesController(
 /**
  * add resoure endpoint
  */
-router.post(
-    "/",
-    authenticate,
-    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
-    asyncWrapper(resourcesController.add),
-);
+router.post("/", authenticate, asyncWrapper(resourcesController.add));
 
 /**
  * get resoure endpoint
  */
-router.get(
-    "/:id",
-    authenticate,
-    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
-    asyncWrapper(resourcesController.get),
-);
+router.get("/:id", authenticate, asyncWrapper(resourcesController.get));
 
 /**
  * get resoure details endpoint
@@ -54,7 +44,6 @@ router.get(
 router.post(
     "/detail",
     authenticate,
-    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
     asyncWrapper(resourcesController.getDetails),
 );
 
@@ -64,19 +53,13 @@ router.post(
 router.post(
     "/add-in-subsection",
     authenticate,
-    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
     asyncWrapper(resourcesController.addInSubSection),
 );
 
 /**
  * remove resource from project endpoint
  */
-router.post(
-    "/remove",
-    authenticate,
-    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
-    asyncWrapper(resourcesController.remove),
-);
+router.post("/remove", authenticate, asyncWrapper(resourcesController.remove));
 
 /**
  * add resource in company as admin endpoint
@@ -84,7 +67,7 @@ router.post(
 router.post(
     "/add-company-admin",
     authenticate,
-    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
+    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN]),
     asyncWrapper(resourcesController.addInCompany),
 );
 
@@ -94,7 +77,7 @@ router.post(
 router.post(
     "/remove-company",
     authenticate,
-    canAccess([Roles.COMPANY, Roles.COMPANY_ADMIN, Roles.PROJECT_ADMIN]),
+    canAccess([Roles.COMPANY]),
     asyncWrapper(resourcesController.removeFromCompany),
 );
 

@@ -369,4 +369,17 @@ export class ProjectService {
     async getProjectsByCompanyId(companyId: string) {
         return await projectModel.find({ companyId, isActive: true });
     }
+
+    async checkProjectRole(projectId: string, userId: string) {
+        const project = await projectModel.findOne(
+            {
+                _id: projectId,
+                "resources.userId": userId,
+                "resources.isApproved": true,
+            },
+            { "resources.$": 1 },
+        );
+
+        return project ? project.resources[0] : null;
+    }
 }

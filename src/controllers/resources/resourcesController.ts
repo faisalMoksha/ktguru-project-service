@@ -46,6 +46,19 @@ export class ResourcesController {
         const addedBy = req.auth.sub;
 
         try {
+            const checkRole = await this.projectService.checkProjectRole(
+                projectId,
+                addedBy,
+            );
+
+            if (!checkRole || checkRole.userRole == Roles.CONSULTANT) {
+                const error = createHttpError(
+                    403,
+                    "You don't have enough permissions",
+                );
+                return next(error);
+            }
+
             const getProject = await this.projectService.findById(projectId);
 
             const subscription: Subscription =
@@ -187,8 +200,27 @@ export class ResourcesController {
         }
     };
 
-    get = async (req: Request, res: Response) => {
+    get = async (req: AuthRequest, res: Response, next: NextFunction) => {
+        if (!req.auth || !req.auth.sub) {
+            return next(createHttpError(400, "Something went wrong"));
+        }
+
+        const addedBy = req.auth.sub;
+
         const projectId = req.params.id;
+
+        const checkRole = await this.projectService.checkProjectRole(
+            projectId,
+            addedBy,
+        );
+
+        if (!checkRole || checkRole.userRole == Roles.CONSULTANT) {
+            const error = createHttpError(
+                403,
+                "You don't have enough permissions",
+            );
+            return next(error);
+        }
 
         const data = await this.projectService.getResources(projectId);
 
@@ -590,7 +622,7 @@ export class ResourcesController {
             let getProjectIds: string[] = [];
 
             if (
-                tokenData.role == Roles.COMPANY_ADMIN ||
+                tokenData.role == Roles.PROJECT_ADMIN ||
                 tokenData.role == Roles.CONSULTANT
             ) {
                 await this.projectService.verifyResource({

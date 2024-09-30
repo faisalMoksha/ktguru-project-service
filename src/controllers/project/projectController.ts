@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Response } from "express";
 import { Request as AuthRequest } from "express-jwt";
 import { Logger } from "winston";
 import createHttpError from "http-errors";
@@ -7,7 +7,7 @@ import { validationResult } from "express-validator";
 import { ApiCallService } from "../../services/apiCallService";
 import { Resources, Subscription } from "../../types";
 import { MessageBroker } from "../../types/broker";
-import { ChatEvents, KafKaTopic } from "../../constants";
+import { ChatEvents, KafKaTopic, Roles } from "../../constants";
 import { Config } from "../../config";
 
 export class ProjectController {
@@ -117,11 +117,30 @@ export class ProjectController {
         }
     };
 
-    update = async (req: Request, res: Response, next: NextFunction) => {
+    update = async (req: AuthRequest, res: Response, next: NextFunction) => {
         const _id = req.params.id;
         const { projectName, projectDesc, technology } = req.body;
 
+        if (!req.auth || !req.auth.sub) {
+            return next(createHttpError(400, "Unauthorized access to project"));
+        }
+
+        const addedBy = req.auth.sub;
+
         try {
+            const checkRole = await this.projectService.checkProjectRole(
+                _id,
+                addedBy,
+            );
+
+            if (!checkRole || checkRole.userRole == Roles.CONSULTANT) {
+                const error = createHttpError(
+                    403,
+                    "You don't have enough permissions",
+                );
+                return next(error);
+            }
+
             const data = await this.projectService.update({
                 _id,
                 projectName,
