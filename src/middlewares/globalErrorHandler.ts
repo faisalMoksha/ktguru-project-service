@@ -14,9 +14,9 @@ export const globalErrorHandler = (
 
     const statusCode = err.status || 500;
     const isProduction = process.env.NODE_ENV === "production";
-    const message = isProduction
-        ? `An unexpected error occurred.`
-        : err.message;
+    // const message = isProduction
+    //     ? `An unexpected error occurred.`
+    //     : err.message;
 
     logger.error(err.message, {
         id: errorId,
@@ -30,7 +30,7 @@ export const globalErrorHandler = (
             {
                 ref: errorId,
                 type: err.name,
-                msg: message,
+                msg: err.message,
                 path: req.path,
                 location: "server",
                 stack: isProduction ? null : err.stack,

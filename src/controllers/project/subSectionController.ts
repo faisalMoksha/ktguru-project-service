@@ -4,13 +4,15 @@ import { Request as AuthRequest } from "express-jwt";
 import createHttpError from "http-errors";
 import { SubSectionService } from "../../services/subSectionService";
 import { MessageBroker } from "../../types/broker";
-import { ChatEvents, KafKaTopic } from "../../constants";
+import { ChatEvents, KafKaTopic, Roles } from "../../constants";
 import { Config } from "../../config";
+import { ProjectService } from "../../services/projectService";
 
 export class SubSectionController {
     constructor(
         private logger: Logger,
         private subSectionService: SubSectionService,
+        private projectService: ProjectService,
         private broker: MessageBroker,
     ) {}
 
@@ -32,6 +34,19 @@ export class SubSectionController {
             }
 
             const createdBy = req.auth.sub;
+
+            const checkRole = await this.projectService.checkProjectRole(
+                projectId,
+                createdBy,
+            );
+
+            if (!checkRole || checkRole.userRole == Roles.CONSULTANT) {
+                const error = createHttpError(
+                    403,
+                    "You don't have enough permissions",
+                );
+                return next(error);
+            }
 
             const project = await this.subSectionService.create({
                 projectName,
@@ -68,11 +83,30 @@ export class SubSectionController {
         }
     };
 
-    update = async (req: Request, res: Response, next: NextFunction) => {
+    update = async (req: AuthRequest, res: Response, next: NextFunction) => {
         const _id = req.params.id;
         const { projectName, projectDesc, technology, projectId } = req.body;
 
+        if (!req.auth || !req.auth.sub) {
+            return next(createHttpError(400, "Unauthorized access to project"));
+        }
+
+        const createdBy = req.auth.sub;
+
         try {
+            const checkRole = await this.projectService.checkProjectRole(
+                _id,
+                createdBy,
+            );
+
+            if (!checkRole || checkRole.userRole == Roles.CONSULTANT) {
+                const error = createHttpError(
+                    403,
+                    "You don't have enough permissions",
+                );
+                return next(error);
+            }
+
             const data = await this.subSectionService.update({
                 _id,
                 projectName,
