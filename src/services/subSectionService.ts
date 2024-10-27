@@ -354,4 +354,16 @@ export class SubSectionService {
 
         return subSectionIds;
     }
+    // async checkSubProjectRole(subSectionId: string, userId: string) {
+    //     const subSection = await subSectionModel.findOne(
+    //         {
+    //             _id: subSectionId,
+    //             "resources.userId": userId,
+    //             "resources.isApproved": true,
+    //         },
+    //         { "resources.$": 1 },
+    //     );
+
+    //     return subSection ? subSection.resources[0] : null;
+    // }
 }

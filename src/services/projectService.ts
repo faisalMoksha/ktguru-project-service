@@ -60,7 +60,7 @@ export class ProjectService {
             .populate({
                 path: "resources.userId",
                 model: "UserCache",
-                select: "firstName lastName avatar",
+                select: "firstName lastName avatar email",
                 foreignField: "userId",
             });
     }

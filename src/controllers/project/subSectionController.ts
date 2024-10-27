@@ -94,8 +94,13 @@ export class SubSectionController {
         const createdBy = req.auth.sub;
 
         try {
+            // const checkRole = await this.subSectionService.checkSubProjectRole(
+            //     _id,
+            //     createdBy,
+            // );
+
             const checkRole = await this.projectService.checkProjectRole(
-                _id,
+                projectId,
                 createdBy,
             );
 
